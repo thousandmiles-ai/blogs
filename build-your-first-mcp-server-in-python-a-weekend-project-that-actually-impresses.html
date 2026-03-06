@@ -3,59 +3,276 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="You've heard MCP is the 'USB-C for AI.' But what does it take to actually build one? A hands-on walkthrough of creating an MCP server from scratch using Python and FastMCP — with tools your LLM can call.">
+  <meta name="description" content="You&#039;ve heard MCP is the &#039;USB-C for AI.&#039; But what does it take to actually build one? A hands-on walkthrough of creating an MCP server from scratch using Python and FastMCP — with tools your LLM can call.">
   <meta name="author" content="Shibin">
+  <meta property="og:title" content="Build Your First MCP Server in Python — A Weekend Project That Actually Impresses">
+  <meta property="og:description" content="You&#039;ve heard MCP is the &#039;USB-C for AI.&#039; But what does it take to actually build one? A hands-on walkthrough of creating an MCP server from scratch using Python and FastMCP — with tools your LLM can call.">
+  <meta property="og:type" content="article">
   <title>Build Your First MCP Server in Python — A Weekend Project That Actually Impresses</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8f9fa;
+      --bg-code: #f6f8fa;
+      --text-primary: #1a202c;
+      --text-secondary: #4a5568;
+      --text-tertiary: #718096;
+      --border-color: #e2e8f0;
+      --accent-color: #3b82f6;
+      --accent-hover: #2563eb;
+      --tag-bg: #e0e7ff;
+      --tag-text: #3730a3;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1a202c;
+        --bg-secondary: #2d3748;
+        --bg-code: #2d3748;
+        --text-primary: #f7fafc;
+        --text-secondary: #e2e8f0;
+        --text-tertiary: #a0aec0;
+        --border-color: #4a5568;
+        --accent-color: #60a5fa;
+        --accent-hover: #3b82f6;
+        --tag-bg: #3730a3;
+        --tag-text: #e0e7ff;
+      }
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.7;
+      color: var(--text-primary);
+      background: var(--bg-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .container {
       max-width: 800px;
       margin: 0 auto;
-      padding: 20px;
-      color: #333;
+      padding: 2rem 1.5rem;
     }
-    h1 { color: #2c3e50; margin-bottom: 10px; }
-    .meta { color: #7f8c8d; margin-bottom: 20px; font-size: 14px; }
-    .tags { margin: 20px 0; }
+
+    .header {
+      margin-bottom: 3rem;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      color: var(--accent-color);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 2rem;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover {
+      color: var(--accent-hover);
+    }
+
+    .back-link::before {
+      content: "←";
+      margin-right: 0.5rem;
+    }
+
+    article h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 640px) {
+      article h1 {
+        font-size: 2rem;
+      }
+    }
+
+    .meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--text-tertiary);
+      font-size: 0.875rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .meta-divider {
+      color: var(--border-color);
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+
     .tag {
       display: inline-block;
-      background: #ecf0f1;
-      padding: 5px 10px;
-      margin-right: 5px;
-      border-radius: 3px;
-      font-size: 12px;
+      background: var(--tag-bg);
+      color: var(--tag-text);
+      padding: 0.375rem 0.875rem;
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      transition: transform 0.2s;
     }
-    img { max-width: 100%; height: auto; }
-    code {
-      background: #f4f4f4;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-family: 'Courier New', monospace;
+
+    .tag:hover {
+      transform: translateY(-1px);
+    }
+
+    .content {
+      font-size: 1.0625rem;
+      color: var(--text-secondary);
+    }
+
+    .content h2 {
+      font-size: 1.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 2.5rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .content h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 2rem 0 1rem;
+    }
+
+    .content h4 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 1.5rem 0 0.75rem;
+    }
+
+    .content p {
+      margin: 1rem 0;
+      line-height: 1.8;
+    }
+
+    .content strong {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .content a {
+      color: var(--accent-color);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
+
+    .content a:hover {
+      border-bottom-color: var(--accent-color);
+    }
+
+    .content code {
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      font-size: 0.875em;
+      background: var(--bg-code);
+      padding: 0.2em 0.4em;
+      border-radius: 0.25rem;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .content pre {
+      background: var(--bg-code);
+      padding: 1.25rem;
+      border-radius: 0.5rem;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border: 1px solid var(--border-color);
+    }
+
+    .content pre code {
+      background: none;
+      padding: 0;
+      border: none;
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    .content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 0.5rem;
+      margin: 2rem 0;
+      box-shadow: var(--shadow-md);
+    }
+
+    .content ul, .content ol {
+      margin: 1rem 0 1rem 1.5rem;
+    }
+
+    .content li {
+      margin: 0.5rem 0;
+    }
+
+    .content blockquote {
+      border-left: 4px solid var(--accent-color);
+      padding-left: 1rem;
+      margin: 1.5rem 0;
+      color: var(--text-tertiary);
+      font-style: italic;
+    }
+
+    .footer {
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+      text-align: center;
+      color: var(--text-tertiary);
+      font-size: 0.875rem;
     }
   </style>
 </head>
 <body>
-  <article>
-    <h1>Build Your First MCP Server in Python — A Weekend Project That Actually Impresses</h1>
-    <div class="meta">
-      <span>By Shibin</span> •
-      <span>2026-01-22</span>
+  <div class="container">
+    <a href="index.html" class="back-link">All Posts</a>
+    <div class="header">
+      <article>
+        <h1>Build Your First MCP Server in Python — A Weekend Project That Actually Impresses</h1>
+        <div class="meta">
+          <span>Shibin</span>
+          <span class="meta-divider">•</span>
+          <time datetime="2026-01-22">January 21, 2026</time>
+        </div>
+        <div class="tags">
+          <span class="tag">Learning</span><span class="tag">AI</span><span class="tag">Software Engineering</span>
+        </div>
+      </article>
     </div>
-    <div class="tags">
-        <span class="tag">Learning</span><span class="tag">AI</span><span class="tag">Software Engineering</span>
-      </div>
     <div class="content">
-      <p><h1>Build Your First MCP Server in Python — A Weekend Project That Actually Impresses</h1></p><p><strong>Everyone talks about MCP. Very few people have actually built a server. Here's how to be one of them — in about an hour.</strong></p><p>---</p><p><h2>The Moment Your LLM Gets Hands</h2></p><p>You've been playing with ChatGPT or Claude for months. Asking questions, generating code, summarizing documents. But there's always a wall: the model can only work with what you give it. Want it to check today's weather? You copy-paste from a browser. Want it to query your database? You run the query yourself and paste the results.</p><p>Now imagine you told your AI: "What's the weather in Chennai right now?" — and it actually went and fetched the answer. Not from training data. Not from a cached response. It called a real API, got real-time data, and gave you the result.</p><p>That's what an MCP server lets you do. You build a small Python service that exposes "tools" — functions your LLM can discover and call. The LLM sees what tools are available, decides which one to use, passes the right parameters, and gets the response back. No copy-pasting. No manual plumbing.</p><p>And the best part? The server you build works with any MCP-compatible client — Claude Desktop, Cursor, VS Code, or any custom app.</p><p><h2>Why Should You Care?</h2></p><p>Two reasons. First, MCP is becoming the standard way AI agents interact with external tools, adopted by both Anthropic and OpenAI, and governed by the Linux Foundation. Knowing how to build MCP servers is a genuinely useful skill for any AI-focused role.</p><p>Second — and more practically — this is one of the best portfolio projects you can build right now. Most people's AI projects are "I wrapped an API call in a chatbot." Building an MCP server shows you understand protocols, tool design, and how AI agents actually connect to the real world. That's a very different conversation in an interview.</p><p><h2>Let Me Back Up — What Are We Building?</h2></p><p>We're going to build a Python MCP server that exposes three tools to any LLM client:</p><p>1. <strong>get_weather</strong> — Fetches current weather for any city using a free API</p>
+      <h1>Build Your First MCP Server in Python — A Weekend Project That Actually Impresses</h1></p><p><strong>Everyone talks about MCP. Very few people have actually built a server. Here's how to be one of them — in about an hour.</strong></p><p>---</p><p><h2>The Moment Your LLM Gets Hands</h2></p><p>You've been playing with ChatGPT or Claude for months. Asking questions, generating code, summarizing documents. But there's always a wall: the model can only work with what you give it. Want it to check today's weather? You copy-paste from a browser. Want it to query your database? You run the query yourself and paste the results.</p><p>Now imagine you told your AI: "What's the weather in Chennai right now?" — and it actually went and fetched the answer. Not from training data. Not from a cached response. It called a real API, got real-time data, and gave you the result.</p><p>That's what an MCP server lets you do. You build a small Python service that exposes "tools" — functions your LLM can discover and call. The LLM sees what tools are available, decides which one to use, passes the right parameters, and gets the response back. No copy-pasting. No manual plumbing.</p><p>And the best part? The server you build works with any MCP-compatible client — Claude Desktop, Cursor, VS Code, or any custom app.</p><p><h2>Why Should You Care?</h2></p><p>Two reasons. First, MCP is becoming the standard way AI agents interact with external tools, adopted by both Anthropic and OpenAI, and governed by the Linux Foundation. Knowing how to build MCP servers is a genuinely useful skill for any AI-focused role.</p><p>Second — and more practically — this is one of the best portfolio projects you can build right now. Most people's AI projects are "I wrapped an API call in a chatbot." Building an MCP server shows you understand protocols, tool design, and how AI agents actually connect to the real world. That's a very different conversation in an interview.</p><p><h2>Let Me Back Up — What Are We Building?</h2></p><p>We're going to build a Python MCP server that exposes three tools to any LLM client:</p><p>1. <strong>get_weather</strong> — Fetches current weather for any city using a free API
 <p>2. <strong>calculate</strong> — Evaluates a math expression safely</p>
-<p>3. <strong>random_fact</strong> — Returns a random fun fact (because why not)</p><p>The server will run locally on your machine. We'll connect it to Claude Desktop so you can actually chat with an AI that uses your tools. The whole thing takes about 50 lines of Python.</p><p>![Mermaid Diagram](https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/build-your-first-mcp-server-in-python-a-weekend-project-that-actually-impresses/mermaid-056538aabc236d2a39a78aa9be01e7bb.svg)</p><p><em>What we're building: a Python server that exposes tools to Claude Desktop via MCP.</em></p><p><h2>Okay, Let's Build It — Step by Step</h2></p><p><h3>Step 1: Set Up Your Environment</h3></p><p>You need Python 3.10 or higher. If you're on a Mac or Linux machine, you probably already have it. Check with `python3 --version`.</p><p>Create a project folder and set up a virtual environment:</p><p>```bash</p>
-<p>mkdir my-mcp-server && cd my-mcp-server</p>
+<p>3. <strong>random_fact</strong> — Returns a random fun fact (because why not)</p><p>The server will run locally on your machine. We'll connect it to Claude Desktop so you can actually chat with an AI that uses your tools. The whole thing takes about 50 lines of Python.</p><p>!<a href="https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/build-your-first-mcp-server-in-python-a-weekend-project-that-actually-impresses/mermaid-056538aabc236d2a39a78aa9be01e7bb.svg" target="_blank" rel="noopener">Mermaid Diagram</a></p><p><em>What we're building: a Python server that exposes tools to Claude Desktop via MCP.</em></p><p><h2>Okay, Let's Build It — Step by Step</h2></p><p><h3>Step 1: Set Up Your Environment</h3></p><p>You need Python 3.10 or higher. If you're on a Mac or Linux machine, you probably already have it. Check with <code>python3 --version</code>.</p><p>Create a project folder and set up a virtual environment:</p><p><pre><code class="language-bash">mkdir my-mcp-server && cd my-mcp-server</p>
 <p>python3 -m venv venv</p>
 <p>source venv/bin/activate  # On Windows: venv\Scripts\activate</p>
-<p>```</p><p>Install the MCP SDK. The recommended way is using `pip`:</p><p>```bash</p>
-<p>pip install "mcp[cli]" httpx</p>
-<p>```</p><p>`mcp` is the official MCP Python SDK. `httpx` is for making HTTP requests to external APIs. We're also pulling in FastMCP, which is included in the SDK and gives us a clean decorator-based API for defining tools.</p><p><h3>Step 2: Write the Server</h3></p><p>Create a file called `server.py`. Here's the entire thing:</p><p>```python</p>
-<p>from mcp.server.fastmcp import FastMCP</p>
+<p></code></pre></p><p>Install the MCP SDK. The recommended way is using <code>pip</code>:</p><p><pre><code class="language-bash">pip install "mcp[cli]" httpx</p>
+<p></code></pre></p><p><code>mcp</code> is the official MCP Python SDK. <code>httpx</code> is for making HTTP requests to external APIs. We're also pulling in FastMCP, which is included in the SDK and gives us a clean decorator-based API for defining tools.</p><p><h3>Step 2: Write the Server</h3></p><p>Create a file called <code>server.py</code>. Here's the entire thing:</p><p><pre><code class="language-python">from mcp.server.fastmcp import FastMCP</p>
 <p>import httpx</p>
 <p>import random</p><p><h1>Create the MCP server</h1></p>
 <p>mcp = FastMCP("my-first-server")</p><p><h1>Tool 1: Get weather for a city</h1></p>
@@ -94,11 +311,10 @@
 <p>    ]</p>
 <p>    return random.choice(facts)</p><p>if __name__ == "__main__":</p>
 <p>    mcp.run(transport="stdio")</p>
-<p>```</p><p>That's it. Seriously. Let's break down what's happening.</p><p><h3>Step 3: Understand What You Just Wrote</h3></p><p><strong>FastMCP</strong> is a wrapper from the official SDK that makes defining tools dead simple. You create an instance, decorate your functions with `@mcp.tool()`, and FastMCP handles all the MCP protocol stuff — JSON-RPC messages, tool discovery, parameter validation.</p><p>Each tool function has:</p>
-<p>- <strong>Type hints</strong> — `city: str` tells the LLM what parameters the tool expects</p>
+<p></code></pre></p><p>That's it. Seriously. Let's break down what's happening.</p><p><h3>Step 3: Understand What You Just Wrote</h3></p><p><strong>FastMCP</strong> is a wrapper from the official SDK that makes defining tools dead simple. You create an instance, decorate your functions with <code>@mcp.tool()</code>, and FastMCP handles all the MCP protocol stuff — JSON-RPC messages, tool discovery, parameter validation.</p><p>Each tool function has:</p>
+<p>- <strong>Type hints</strong> — <code>city: str</code> tells the LLM what parameters the tool expects</p>
 <p>- <strong>A docstring</strong> — This is critical. The LLM reads this to decide when to use the tool. Write it like you're explaining the tool to a person.</p>
-<p>- <strong>A return value</strong> — A string that gets sent back to the LLM as the observation</p><p>The `mcp.run(transport="stdio")` at the bottom starts the server using standard input/output — this is how Claude Desktop communicates with local MCP servers. No HTTP, no ports, just stdin/stdout.</p><p>![Mermaid Diagram](https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/build-your-first-mcp-server-in-python-a-weekend-project-that-actually-impresses/mermaid-9716503505c55b9235c7aae41b08f67b.svg)</p><p><em>The full flow: you ask a question, Claude decides to use your tool, the server calls the API, and the result flows back.</em></p><p><h3>Step 4: Connect to Claude Desktop</h3></p><p>Now the fun part — making Claude Desktop actually use your server.</p><p>Open Claude Desktop and go to <strong>Settings > Developer > Edit Config</strong>. This opens a JSON file. Add your server to it:</p><p>```json</p>
-<p>{</p>
+<p>- <strong>A return value</strong> — A string that gets sent back to the LLM as the observation</p><p>The <code>mcp.run(transport="stdio")</code> at the bottom starts the server using standard input/output — this is how Claude Desktop communicates with local MCP servers. No HTTP, no ports, just stdin/stdout.</p><p>!<a href="https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/build-your-first-mcp-server-in-python-a-weekend-project-that-actually-impresses/mermaid-9716503505c55b9235c7aae41b08f67b.svg" target="_blank" rel="noopener">Mermaid Diagram</a></p><p><em>The full flow: you ask a question, Claude decides to use your tool, the server calls the API, and the result flows back.</em></p><p><h3>Step 4: Connect to Claude Desktop</h3></p><p>Now the fun part — making Claude Desktop actually use your server.</p><p>Open Claude Desktop and go to <strong>Settings > Developer > Edit Config</strong>. This opens a JSON file. Add your server to it:</p><p><pre><code class="language-json">{</p>
 <p>  "mcpServers": {</p>
 <p>    "my-first-server": {</p>
 <p>      "command": "python3",</p>
@@ -107,11 +323,14 @@
 <p>    }</p>
 <p>  }</p>
 <p>}</p>
-<p>```</p><p>Replace `/full/path/to/your/server.py` with the actual path to your file. Save, and restart Claude Desktop.</p><p>You should now see a small hammer icon in the chat input area — that means Claude has discovered your tools. Click it to see the three tools listed.</p><p><h3>Step 5: Test It</h3></p><p>Type into Claude: "What's the weather in Bangalore right now?"</p><p>Claude should recognize that it needs to use the `get_weather` tool, call your server, and return the live weather data. Try the calculator: "What's 15 * 37 + 42?" Try the fun fact: "Tell me a random tech fact."</p><p>Each time, you'll see Claude decide which tool to use, call it through your MCP server, and incorporate the result into its response. You've just given an LLM the ability to do things it couldn't do before.</p><p><h2>Making It Better — Ideas for Your Next Steps</h2></p><p>The basic server works, but here are a few directions to take it further:</p><p><strong>Add more tools.</strong> Wrap any API you use regularly — a to-do list API, a movie database, your college's timetable system, a GitHub API for checking your repos. Each tool is just another decorated function.</p><p><strong>Add resources.</strong> Tools let the LLM do things. Resources let it read things. You can expose file contents, database records, or API responses as read-only resources that the LLM can pull into its context.</p><p><strong>Try the inspector.</strong> The MCP SDK ships with a built-in inspector tool. Run `mcp dev server.py` to get a web UI where you can test your tools interactively without needing Claude Desktop. Super useful for debugging.</p><p><strong>Deploy it remotely.</strong> Local servers are great for development, but for production you'd want an HTTP-based transport (SSE or WebSocket). The FastMCP docs cover this — it's a one-line change from `stdio` to `sse`.</p><p><h2>Mistakes That Bite — Things That Trip Up Beginners</h2></p><p><strong>"My tools don't show up in Claude Desktop."</strong> The most common issue. Double-check: is the path in the config JSON absolute? Is the virtual environment activated? Did you restart Claude Desktop after editing the config? The server needs to start successfully for tools to appear.</p><p><strong>"The docstring doesn't matter, right?"</strong> Wrong. The LLM uses the docstring to decide whether and when to use your tool. A vague docstring like "does something with weather" will confuse the model. Be specific: "Get current weather for a city. Returns temperature in Celsius and conditions."</p><p><strong>"I'll just expose my entire database as a tool."</strong> Resist this urge. Each tool should do one specific thing. A tool called `query_anything` that accepts raw SQL is both a security nightmare and confusing for the LLM. Instead, create focused tools like `get_user_by_email` or `list_recent_orders`. Smaller, focused tools get used correctly more often.</p><p><h2>Now Go Break Something</h2></p><p>You've just built something that most developers only read about. An MCP server — the standard protocol that major AI labs are converging on — running on your machine, giving an LLM real-world capabilities.</p><p>Here's what to explore next:</p><p>- <strong>The official MCP docs</strong> at modelcontextprotocol.io have a quickstart guide and full API reference</p>
+<p></code></pre></p><p>Replace <code>/full/path/to/your/server.py</code> with the actual path to your file. Save, and restart Claude Desktop.</p><p>You should now see a small hammer icon in the chat input area — that means Claude has discovered your tools. Click it to see the three tools listed.</p><p><h3>Step 5: Test It</h3></p><p>Type into Claude: "What's the weather in Bangalore right now?"</p><p>Claude should recognize that it needs to use the <code>get_weather</code> tool, call your server, and return the live weather data. Try the calculator: "What's 15 * 37 + 42?" Try the fun fact: "Tell me a random tech fact."</p><p>Each time, you'll see Claude decide which tool to use, call it through your MCP server, and incorporate the result into its response. You've just given an LLM the ability to do things it couldn't do before.</p><p><h2>Making It Better — Ideas for Your Next Steps</h2></p><p>The basic server works, but here are a few directions to take it further:</p><p><strong>Add more tools.</strong> Wrap any API you use regularly — a to-do list API, a movie database, your college's timetable system, a GitHub API for checking your repos. Each tool is just another decorated function.</p><p><strong>Add resources.</strong> Tools let the LLM do things. Resources let it read things. You can expose file contents, database records, or API responses as read-only resources that the LLM can pull into its context.</p><p><strong>Try the inspector.</strong> The MCP SDK ships with a built-in inspector tool. Run <code>mcp dev server.py</code> to get a web UI where you can test your tools interactively without needing Claude Desktop. Super useful for debugging.</p><p><strong>Deploy it remotely.</strong> Local servers are great for development, but for production you'd want an HTTP-based transport (SSE or WebSocket). The FastMCP docs cover this — it's a one-line change from <code>stdio</code> to <code>sse</code>.</p><p><h2>Mistakes That Bite — Things That Trip Up Beginners</h2></p><p><strong>"My tools don't show up in Claude Desktop."</strong> The most common issue. Double-check: is the path in the config JSON absolute? Is the virtual environment activated? Did you restart Claude Desktop after editing the config? The server needs to start successfully for tools to appear.</p><p><strong>"The docstring doesn't matter, right?"</strong> Wrong. The LLM uses the docstring to decide whether and when to use your tool. A vague docstring like "does something with weather" will confuse the model. Be specific: "Get current weather for a city. Returns temperature in Celsius and conditions."</p><p><strong>"I'll just expose my entire database as a tool."</strong> Resist this urge. Each tool should do one specific thing. A tool called <code>query_anything</code> that accepts raw SQL is both a security nightmare and confusing for the LLM. Instead, create focused tools like <code>get_user_by_email</code> or <code>list_recent_orders</code>. Smaller, focused tools get used correctly more often.</p><p><h2>Now Go Break Something</h2></p><p>You've just built something that most developers only read about. An MCP server — the standard protocol that major AI labs are converging on — running on your machine, giving an LLM real-world capabilities.</p><p>Here's what to explore next:</p><p>- <strong>The official MCP docs</strong> at modelcontextprotocol.io have a quickstart guide and full API reference</p>
 <p>- <strong>The free Hugging Face MCP course</strong> walks through building servers and connecting them to agents, with hands-on exercises</p>
 <p>- <strong>FastMCP's GitHub repo</strong> has examples for advanced patterns like authentication, streaming, and resource management</p>
 <p>- Search for "MCP server examples" on GitHub — the community has built servers for Notion, Kubernetes, Spotify, and hundreds of other services. Reading other people's servers is one of the fastest ways to learn</p><p>---</p><p><strong>Remember staring at your LLM, wishing it could just check the weather or run a calculation instead of making you do it? Fifty lines of Python later, it can. That's what MCP is about — not replacing what LLMs do well, but giving them the tools to do what they couldn't. Your server is small. The pattern scales to anything.</strong></p>
     </div>
-  </article>
+    <footer class="footer">
+      <p>&copy; 2026 Shibin. All rights reserved.</p>
+    </footer>
+  </div>
 </body>
 </html>
