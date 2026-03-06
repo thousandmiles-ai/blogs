@@ -3,72 +3,291 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Your RAG pipeline returns an answer. It sounds confident. But is it actually correct? Turns out 'vibes-based evaluation' doesn't scale. Learn the metrics and frameworks that actually tell you if your LLM is hallucinating, missing context, or nailing it.">
+  <meta name="description" content="Your RAG pipeline returns an answer. It sounds confident. But is it actually correct? Turns out &#039;vibes-based evaluation&#039; doesn&#039;t scale. Learn the metrics and frameworks that actually tell you if your LLM is hallucinating, missing context, or nailing it.">
   <meta name="author" content="Shibin">
-  <title>How to Evaluate LLM Outputs — Beyond 'Looks Good to Me'</title>
+  <meta property="og:title" content="How to Evaluate LLM Outputs — Beyond &#039;Looks Good to Me&#039;">
+  <meta property="og:description" content="Your RAG pipeline returns an answer. It sounds confident. But is it actually correct? Turns out &#039;vibes-based evaluation&#039; doesn&#039;t scale. Learn the metrics and frameworks that actually tell you if your LLM is hallucinating, missing context, or nailing it.">
+  <meta property="og:type" content="article">
+  <title>How to Evaluate LLM Outputs — Beyond &#039;Looks Good to Me&#039;</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8f9fa;
+      --bg-code: #f6f8fa;
+      --text-primary: #1a202c;
+      --text-secondary: #4a5568;
+      --text-tertiary: #718096;
+      --border-color: #e2e8f0;
+      --accent-color: #3b82f6;
+      --accent-hover: #2563eb;
+      --tag-bg: #e0e7ff;
+      --tag-text: #3730a3;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1a202c;
+        --bg-secondary: #2d3748;
+        --bg-code: #2d3748;
+        --text-primary: #f7fafc;
+        --text-secondary: #e2e8f0;
+        --text-tertiary: #a0aec0;
+        --border-color: #4a5568;
+        --accent-color: #60a5fa;
+        --accent-hover: #3b82f6;
+        --tag-bg: #3730a3;
+        --tag-text: #e0e7ff;
+      }
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.7;
+      color: var(--text-primary);
+      background: var(--bg-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .container {
       max-width: 800px;
       margin: 0 auto;
-      padding: 20px;
-      color: #333;
+      padding: 2rem 1.5rem;
     }
-    h1 { color: #2c3e50; margin-bottom: 10px; }
-    .meta { color: #7f8c8d; margin-bottom: 20px; font-size: 14px; }
-    .tags { margin: 20px 0; }
+
+    .header {
+      margin-bottom: 3rem;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      color: var(--accent-color);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 2rem;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover {
+      color: var(--accent-hover);
+    }
+
+    .back-link::before {
+      content: "←";
+      margin-right: 0.5rem;
+    }
+
+    article h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 640px) {
+      article h1 {
+        font-size: 2rem;
+      }
+    }
+
+    .meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--text-tertiary);
+      font-size: 0.875rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .meta-divider {
+      color: var(--border-color);
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+
     .tag {
       display: inline-block;
-      background: #ecf0f1;
-      padding: 5px 10px;
-      margin-right: 5px;
-      border-radius: 3px;
-      font-size: 12px;
+      background: var(--tag-bg);
+      color: var(--tag-text);
+      padding: 0.375rem 0.875rem;
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      transition: transform 0.2s;
     }
-    img { max-width: 100%; height: auto; }
-    code {
-      background: #f4f4f4;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-family: 'Courier New', monospace;
+
+    .tag:hover {
+      transform: translateY(-1px);
+    }
+
+    .content {
+      font-size: 1.0625rem;
+      color: var(--text-secondary);
+    }
+
+    .content h2 {
+      font-size: 1.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 2.5rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .content h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 2rem 0 1rem;
+    }
+
+    .content h4 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 1.5rem 0 0.75rem;
+    }
+
+    .content p {
+      margin: 1rem 0;
+      line-height: 1.8;
+    }
+
+    .content strong {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .content a {
+      color: var(--accent-color);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
+
+    .content a:hover {
+      border-bottom-color: var(--accent-color);
+    }
+
+    .content code {
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      font-size: 0.875em;
+      background: var(--bg-code);
+      padding: 0.2em 0.4em;
+      border-radius: 0.25rem;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .content pre {
+      background: var(--bg-code);
+      padding: 1.25rem;
+      border-radius: 0.5rem;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border: 1px solid var(--border-color);
+    }
+
+    .content pre code {
+      background: none;
+      padding: 0;
+      border: none;
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    .content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 0.5rem;
+      margin: 2rem 0;
+      box-shadow: var(--shadow-md);
+    }
+
+    .content ul, .content ol {
+      margin: 1rem 0 1rem 1.5rem;
+    }
+
+    .content li {
+      margin: 0.5rem 0;
+    }
+
+    .content blockquote {
+      border-left: 4px solid var(--accent-color);
+      padding-left: 1rem;
+      margin: 1.5rem 0;
+      color: var(--text-tertiary);
+      font-style: italic;
+    }
+
+    .footer {
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+      text-align: center;
+      color: var(--text-tertiary);
+      font-size: 0.875rem;
     }
   </style>
 </head>
 <body>
-  <article>
-    <h1>How to Evaluate LLM Outputs — Beyond 'Looks Good to Me'</h1>
-    <div class="meta">
-      <span>By Shibin</span> •
-      <span>2026-02-16</span>
+  <div class="container">
+    <a href="index.html" class="back-link">All Posts</a>
+    <div class="header">
+      <article>
+        <h1>How to Evaluate LLM Outputs — Beyond &#039;Looks Good to Me&#039;</h1>
+        <div class="meta">
+          <span>Shibin</span>
+          <span class="meta-divider">•</span>
+          <time datetime="2026-02-16">February 15, 2026</time>
+        </div>
+        <div class="tags">
+          <span class="tag">Learning</span><span class="tag">AI</span>
+        </div>
+      </article>
     </div>
-    <div class="tags">
-        <span class="tag">Learning</span><span class="tag">AI</span>
-      </div>
     <div class="content">
-      <p><h2>The Classic Problem</h2></p><p>You've built a RAG pipeline. Your knowledge base is solid. Your retriever works fine. You run a test query, and the LLM spits out an answer that sounds <em>completely</em> confident. Grammar? Perfect. Structure? Coherent. Tone? Professional.</p><p>You copy it to your Slack channel: "It works!"</p><p>But then someone asks a follow-up question, and the answer contradicts itself. Or they check a fact and it's subtly wrong. Or they ask "where did you get that?" and you realize the LLM just... made it up.</p><p>That's not an error in your pipeline. That's an error in how you evaluated it.</p><p>If you're relying on "it looks right to me," you're in dangerous territory. The problem scales immediately: when you have 100 queries, 1000 queries, or a production system running 24/7, you can't manually inspect every output.</p><p>You need metrics.</p><p><h2>Why This Matters</h2></p><p><strong>Vibes-based evaluation breaks at scale.</strong> Human inspection is slow, inconsistent, and subjective. One person reads an answer and thinks "solid." Another reads the same answer and spots a hallucination. You're shipping an LLM system that nobody actually understands, and nobody can debug when it fails.</p><p>But here's the thing: traditional ML evaluation metrics don't work for language models. In classification, you have clear right/wrong answers. In RAG, there's no single "ground truth." The same query might have 10 correct answers depending on how you interpret it. And hallucinations are <em>genuinely</em> hard to spot automatically because the LLM is confident and grammatically flawless.</p><p>So we need new frameworks. We need to measure different dimensions separately, and we need tools that don't require a human to read every single output.</p><p><h2>The Core Challenge: Why LLM Eval Is Different</h2></p><p>Traditional ML evaluation assumes:</p>
+      <h2>The Classic Problem</h2></p><p>You've built a RAG pipeline. Your knowledge base is solid. Your retriever works fine. You run a test query, and the LLM spits out an answer that sounds <em>completely</em> confident. Grammar? Perfect. Structure? Coherent. Tone? Professional.</p><p>You copy it to your Slack channel: "It works!"</p><p>But then someone asks a follow-up question, and the answer contradicts itself. Or they check a fact and it's subtly wrong. Or they ask "where did you get that?" and you realize the LLM just... made it up.</p><p>That's not an error in your pipeline. That's an error in how you evaluated it.</p><p>If you're relying on "it looks right to me," you're in dangerous territory. The problem scales immediately: when you have 100 queries, 1000 queries, or a production system running 24/7, you can't manually inspect every output.</p><p>You need metrics.</p><p><h2>Why This Matters</h2></p><p><strong>Vibes-based evaluation breaks at scale.</strong> Human inspection is slow, inconsistent, and subjective. One person reads an answer and thinks "solid." Another reads the same answer and spots a hallucination. You're shipping an LLM system that nobody actually understands, and nobody can debug when it fails.</p><p>But here's the thing: traditional ML evaluation metrics don't work for language models. In classification, you have clear right/wrong answers. In RAG, there's no single "ground truth." The same query might have 10 correct answers depending on how you interpret it. And hallucinations are <em>genuinely</em> hard to spot automatically because the LLM is confident and grammatically flawless.</p><p>So we need new frameworks. We need to measure different dimensions separately, and we need tools that don't require a human to read every single output.</p><p><h2>The Core Challenge: Why LLM Eval Is Different</h2></p><p>Traditional ML evaluation assumes:
 <p>- There's one right answer (binary classification, exact match, etc.)</p>
 <p>- Metrics are purely numerical (accuracy, precision, recall)</p>
 <p>- No middle ground between right and wrong</p><p>Language generation throws all of that out:</p>
 <p>- Multiple correct answers exist (paraphrasing, different phrasings, different correct facts)</p>
 <p>- Quality is multidimensional (you need to measure faithfulness <em>and</em> relevance, not just "accuracy")</p>
-<p>- Hallucinations look like correct answers—that's the whole problem</p><p>That's why LLM evaluation has evolved into a multi-metric framework where you evaluate different dimensions separately.</p><p><h2>The RAGAS Framework: Your Evaluation Toolkit</h2></p><p><strong>RAGAS</strong> (Retrieval Augmented Generation Assessment) is the most popular open-source framework for evaluating RAG systems. It provides a suite of metrics that work <em>without</em> requiring ground truth labels.</p><p>![Mermaid Diagram](https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/how-to-evaluate-llm-outputs-beyond-looks-good-to-me/mermaid-cd38f5b486c86c719d4cda7bfab20854.svg)</p><p><h3>The Core Metrics</h3></p><p><strong>Faithfulness</strong> — Does the answer contain hallucinations?</p><p>The metric works like this: an LLM extracts all <em>claims</em> made in the answer. Then it checks each claim against the retrieved context. If a claim isn't supported by the context, it's hallucinated.</p><p>Score: 0–1, where 1 means "everything is supported by the retrieved context."</p><p>Why it matters: This catches the sneaky case where your LLM generates grammatically perfect nonsense.</p><p><strong>Answer Relevancy</strong> — Is the answer actually relevant to the user's question?</p><p>Instead of asking a human "is this relevant?", RAGAS generates multiple synthetic questions from the answer using the LLM, then measures how similar those questions are to the original query.</p><p>Score: 0–1, where 1 means "the answer is directly answering what was asked."</p><p>Why it matters: An answer can be faithful to the context <em>and</em> completely miss what the user wanted.</p><p><strong>Context Precision</strong> — Are the most useful chunks ranked first?</p><p>When you retrieve 10 documents, is the most relevant one at position 1? Or buried at position 7? This metric measures whether the retriever ranked things in the right order.</p><p>Score: 0–1, where 1 means "every retrieved chunk is relevant."</p><p>Why it matters: If your LLM has to wade through junk to find useful context, it'll get confused or hallucinate.</p><p><strong>Context Recall</strong> — Did you retrieve everything needed?</p><p>This asks: given the correct answer, how much of the supporting context did the retriever actually find?</p><p>Score: 0–1, where 1 means "you got all the context needed to answer correctly."</p><p>Why it matters: If key context is missing, your LLM can't answer well, no matter how good it is.</p><p><h3>Putting It Together</h3></p><p>You're not checking one metric. You're checking four dimensions of a single evaluation:</p><p>- Faithfulness measures <em>hallucinations</em> → low faithfulness = your LLM is making things up</p>
+<p>- Hallucinations look like correct answers—that's the whole problem</p><p>That's why LLM evaluation has evolved into a multi-metric framework where you evaluate different dimensions separately.</p><p><h2>The RAGAS Framework: Your Evaluation Toolkit</h2></p><p><strong>RAGAS</strong> (Retrieval Augmented Generation Assessment) is the most popular open-source framework for evaluating RAG systems. It provides a suite of metrics that work <em>without</em> requiring ground truth labels.</p><p>!<a href="https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/how-to-evaluate-llm-outputs-beyond-looks-good-to-me/mermaid-cd38f5b486c86c719d4cda7bfab20854.svg" target="_blank" rel="noopener">Mermaid Diagram</a></p><p><h3>The Core Metrics</h3></p><p><strong>Faithfulness</strong> — Does the answer contain hallucinations?</p><p>The metric works like this: an LLM extracts all <em>claims</em> made in the answer. Then it checks each claim against the retrieved context. If a claim isn't supported by the context, it's hallucinated.</p><p>Score: 0–1, where 1 means "everything is supported by the retrieved context."</p><p>Why it matters: This catches the sneaky case where your LLM generates grammatically perfect nonsense.</p><p><strong>Answer Relevancy</strong> — Is the answer actually relevant to the user's question?</p><p>Instead of asking a human "is this relevant?", RAGAS generates multiple synthetic questions from the answer using the LLM, then measures how similar those questions are to the original query.</p><p>Score: 0–1, where 1 means "the answer is directly answering what was asked."</p><p>Why it matters: An answer can be faithful to the context <em>and</em> completely miss what the user wanted.</p><p><strong>Context Precision</strong> — Are the most useful chunks ranked first?</p><p>When you retrieve 10 documents, is the most relevant one at position 1? Or buried at position 7? This metric measures whether the retriever ranked things in the right order.</p><p>Score: 0–1, where 1 means "every retrieved chunk is relevant."</p><p>Why it matters: If your LLM has to wade through junk to find useful context, it'll get confused or hallucinate.</p><p><strong>Context Recall</strong> — Did you retrieve everything needed?</p><p>This asks: given the correct answer, how much of the supporting context did the retriever actually find?</p><p>Score: 0–1, where 1 means "you got all the context needed to answer correctly."</p><p>Why it matters: If key context is missing, your LLM can't answer well, no matter how good it is.</p><p><h3>Putting It Together</h3></p><p>You're not checking one metric. You're checking four dimensions of a single evaluation:</p><p>- Faithfulness measures <em>hallucinations</em> → low faithfulness = your LLM is making things up</p>
 <p>- Answer relevancy measures <em>understanding the question</em> → low relevancy = wrong answer, right format</p>
 <p>- Context precision measures <em>retriever ranking</em> → low precision = retriever is mixing junk with gold</p>
-<p>- Context recall measures <em>completeness</em> → low recall = retriever missed important context</p><p>A healthy RAG system has all four scores high. If faithfulness is low, you have a hallucination problem. If recall is low, your retriever is weak.</p><p><h2>Beyond RAGAS: LLM-as-Judge</h2></p><p>RAGAS is great for RAG systems specifically. But what if your system is more general? What if you're not using retrieval?</p><p>That's where <strong>LLM-as-Judge</strong> comes in.</p><p>The idea is simple: use a powerful LLM (like GPT-4) to evaluate the outputs of another LLM, prompted to assign scores on dimensions like helpfulness, correctness, faithfulness, or safety.</p><p>```</p>
-<p>Judge prompt (simplified):</p>
+<p>- Context recall measures <em>completeness</em> → low recall = retriever missed important context</p><p>A healthy RAG system has all four scores high. If faithfulness is low, you have a hallucination problem. If recall is low, your retriever is weak.</p><p><h2>Beyond RAGAS: LLM-as-Judge</h2></p><p>RAGAS is great for RAG systems specifically. But what if your system is more general? What if you're not using retrieval?</p><p>That's where <strong>LLM-as-Judge</strong> comes in.</p><p>The idea is simple: use a powerful LLM (like GPT-4) to evaluate the outputs of another LLM, prompted to assign scores on dimensions like helpfulness, correctness, faithfulness, or safety.</p><p><pre><code class="language-">Judge prompt (simplified):</p>
 <p>"You are an expert evaluator. The user asked: [QUERY]</p>
 <p>The system responded: [ANSWER]</p>
 <p>Rate the response from 1-10 on correctness, helpfulness, and truthfulness.</p>
 <p>Explain your reasoning."</p>
-<p>```</p><p><strong>Pros:</strong></p>
+<p></code></pre></p><p><strong>Pros:</strong></p>
 <p>- No ground truth needed</p>
 <p>- Works for any task (not just RAG)</p>
 <p>- Can evaluate complex, nuanced quality</p>
 <p>- Aligns with human judgment (85%+ agreement with human raters on GPT-4 judgments)</p><p><strong>Cons:</strong></p>
 <p>- Costs money (you're calling an LLM to evaluate another LLM)</p>
 <p>- Can inherit biases from the judge (GPT-4 has position bias, verbosity bias, self-enhancement bias)</p>
-<p>- Prompt wording matters <em>a lot</em>—small changes in phrasing can shift scores by 10-15%</p><p><strong>Pro tip:</strong> Use Chain-of-Thought prompting with your judge. Ask it to explain its reasoning step-by-step before assigning a score. This improves reliability by 10-15% and gives you a debuggable reasoning trail.</p><p><h2>Hallucination Detection: The Hard Problem</h2></p><p>Here's the truth: hallucinations are <em>hard</em> to detect automatically.</p><p>Your LLM generates a paragraph that sounds completely plausible. It cites no sources (because it made it up). It's grammatically perfect. How do you know it's wrong without checking every fact manually?</p><p>![Mermaid Diagram](https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/how-to-evaluate-llm-outputs-beyond-looks-good-to-me/mermaid-905f3af0b7c26ba371447ec17ca99415.svg)</p><p>Recent approaches:</p><p><strong>Self-Consistency Methods</strong> (SelfCheckGPT):</p>
+<p>- Prompt wording matters <em>a lot</em>—small changes in phrasing can shift scores by 10-15%</p><p><strong>Pro tip:</strong> Use Chain-of-Thought prompting with your judge. Ask it to explain its reasoning step-by-step before assigning a score. This improves reliability by 10-15% and gives you a debuggable reasoning trail.</p><p><h2>Hallucination Detection: The Hard Problem</h2></p><p>Here's the truth: hallucinations are <em>hard</em> to detect automatically.</p><p>Your LLM generates a paragraph that sounds completely plausible. It cites no sources (because it made it up). It's grammatically perfect. How do you know it's wrong without checking every fact manually?</p><p>!<a href="https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/how-to-evaluate-llm-outputs-beyond-looks-good-to-me/mermaid-905f3af0b7c26ba371447ec17ca99415.svg" target="_blank" rel="noopener">Mermaid Diagram</a></p><p>Recent approaches:</p><p><strong>Self-Consistency Methods</strong> (SelfCheckGPT):</p>
 <p>- Generate the same answer multiple times with different random seeds</p>
 <p>- If the answer is consistent across generations, it's probably faithful</p>
 <p>- If it varies wildly each time, it's probably hallucinated</p>
@@ -107,6 +326,9 @@
 <p>4. When scores are low, debug instead of tweaking prompts blindly</p>
 <p>5. Repeat</p><p>Start small. Don't build a 500-metric evaluation dashboard on day one. Evaluate the dimensions that matter most to your users, and add more metrics as you grow.</p><p>And yes, you still need humans. Metrics catch patterns and point you toward problems. But someone has to verify that the metrics are actually measuring what you care about.</p><p>Because in the end, "looks good to me" scales to maybe 100 queries before it breaks. Metrics scale to 100,000. And human judgment backed by metrics? That actually works in production.</p><p>---</p><p><em>Your turn: what does your LLM system get wrong most often? Is it hallucinations, missing context, or something else? Metrics can help you find out.</em></p>
     </div>
-  </article>
+    <footer class="footer">
+      <p>&copy; 2026 Shibin. All rights reserved.</p>
+    </footer>
+  </div>
 </body>
 </html>
