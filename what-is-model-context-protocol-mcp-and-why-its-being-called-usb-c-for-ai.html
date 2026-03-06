@@ -3,50 +3,270 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Your AI agent can write code, but it can't read your database or send a Slack message without duct-tape integrations. MCP is the open standard that fixes this — here's how the protocol works, why it matters, and what it means for developers.">
+  <meta name="description" content="Your AI agent can write code, but it can&#039;t read your database or send a Slack message without duct-tape integrations. MCP is the open standard that fixes this — here&#039;s how the protocol works, why it matters, and what it means for developers.">
   <meta name="author" content="Shibin">
-  <title>What Is Model Context Protocol (MCP) — And Why It's Being Called USB-C for AI</title>
+  <meta property="og:title" content="What Is Model Context Protocol (MCP) — And Why It&#039;s Being Called USB-C for AI">
+  <meta property="og:description" content="Your AI agent can write code, but it can&#039;t read your database or send a Slack message without duct-tape integrations. MCP is the open standard that fixes this — here&#039;s how the protocol works, why it matters, and what it means for developers.">
+  <meta property="og:type" content="article">
+  <title>What Is Model Context Protocol (MCP) — And Why It&#039;s Being Called USB-C for AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8f9fa;
+      --bg-code: #f6f8fa;
+      --text-primary: #1a202c;
+      --text-secondary: #4a5568;
+      --text-tertiary: #718096;
+      --border-color: #e2e8f0;
+      --accent-color: #3b82f6;
+      --accent-hover: #2563eb;
+      --tag-bg: #e0e7ff;
+      --tag-text: #3730a3;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1a202c;
+        --bg-secondary: #2d3748;
+        --bg-code: #2d3748;
+        --text-primary: #f7fafc;
+        --text-secondary: #e2e8f0;
+        --text-tertiary: #a0aec0;
+        --border-color: #4a5568;
+        --accent-color: #60a5fa;
+        --accent-hover: #3b82f6;
+        --tag-bg: #3730a3;
+        --tag-text: #e0e7ff;
+      }
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.7;
+      color: var(--text-primary);
+      background: var(--bg-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .container {
       max-width: 800px;
       margin: 0 auto;
-      padding: 20px;
-      color: #333;
+      padding: 2rem 1.5rem;
     }
-    h1 { color: #2c3e50; margin-bottom: 10px; }
-    .meta { color: #7f8c8d; margin-bottom: 20px; font-size: 14px; }
-    .tags { margin: 20px 0; }
+
+    .header {
+      margin-bottom: 3rem;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      color: var(--accent-color);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 2rem;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover {
+      color: var(--accent-hover);
+    }
+
+    .back-link::before {
+      content: "←";
+      margin-right: 0.5rem;
+    }
+
+    article h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 640px) {
+      article h1 {
+        font-size: 2rem;
+      }
+    }
+
+    .meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--text-tertiary);
+      font-size: 0.875rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .meta-divider {
+      color: var(--border-color);
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+
     .tag {
       display: inline-block;
-      background: #ecf0f1;
-      padding: 5px 10px;
-      margin-right: 5px;
-      border-radius: 3px;
-      font-size: 12px;
+      background: var(--tag-bg);
+      color: var(--tag-text);
+      padding: 0.375rem 0.875rem;
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      transition: transform 0.2s;
     }
-    img { max-width: 100%; height: auto; }
-    code {
-      background: #f4f4f4;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-family: 'Courier New', monospace;
+
+    .tag:hover {
+      transform: translateY(-1px);
+    }
+
+    .content {
+      font-size: 1.0625rem;
+      color: var(--text-secondary);
+    }
+
+    .content h2 {
+      font-size: 1.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 2.5rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .content h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 2rem 0 1rem;
+    }
+
+    .content h4 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 1.5rem 0 0.75rem;
+    }
+
+    .content p {
+      margin: 1rem 0;
+      line-height: 1.8;
+    }
+
+    .content strong {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .content a {
+      color: var(--accent-color);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
+
+    .content a:hover {
+      border-bottom-color: var(--accent-color);
+    }
+
+    .content code {
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      font-size: 0.875em;
+      background: var(--bg-code);
+      padding: 0.2em 0.4em;
+      border-radius: 0.25rem;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .content pre {
+      background: var(--bg-code);
+      padding: 1.25rem;
+      border-radius: 0.5rem;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border: 1px solid var(--border-color);
+    }
+
+    .content pre code {
+      background: none;
+      padding: 0;
+      border: none;
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    .content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 0.5rem;
+      margin: 2rem 0;
+      box-shadow: var(--shadow-md);
+    }
+
+    .content ul, .content ol {
+      margin: 1rem 0 1rem 1.5rem;
+    }
+
+    .content li {
+      margin: 0.5rem 0;
+    }
+
+    .content blockquote {
+      border-left: 4px solid var(--accent-color);
+      padding-left: 1rem;
+      margin: 1.5rem 0;
+      color: var(--text-tertiary);
+      font-style: italic;
+    }
+
+    .footer {
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+      text-align: center;
+      color: var(--text-tertiary);
+      font-size: 0.875rem;
     }
   </style>
 </head>
 <body>
-  <article>
-    <h1>What Is Model Context Protocol (MCP) — And Why It's Being Called USB-C for AI</h1>
-    <div class="meta">
-      <span>By Shibin</span> •
-      <span>2026-01-18</span>
+  <div class="container">
+    <a href="index.html" class="back-link">All Posts</a>
+    <div class="header">
+      <article>
+        <h1>What Is Model Context Protocol (MCP) — And Why It&#039;s Being Called USB-C for AI</h1>
+        <div class="meta">
+          <span>Shibin</span>
+          <span class="meta-divider">•</span>
+          <time datetime="2026-01-18">January 17, 2026</time>
+        </div>
+        <div class="tags">
+          <span class="tag">Learning</span><span class="tag">AI</span><span class="tag">Software Engineering</span>
+        </div>
+      </article>
     </div>
-    <div class="tags">
-        <span class="tag">Learning</span><span class="tag">AI</span><span class="tag">Software Engineering</span>
-      </div>
     <div class="content">
-      <p><h1>What Is Model Context Protocol (MCP) — And Why It's Being Called USB-C for AI</h1></p><p><strong>Your LLM is smart. But without a way to talk to the outside world, it's smart in a locked room.</strong></p><p>---</p><p><h2>The Tool That Can't Use Any Tools</h2></p><p>You've built something cool — an AI assistant that answers questions about your codebase. You wire it up to GPT or Claude, feed it your docs, and it works. Then someone asks: "Can it also create a Jira ticket when it finds a bug?" Sure, you think. You write a custom integration. Then: "Can it also read from our Postgres database?" Another custom connector. "What about Slack notifications?" Another one.</p><p>Three weeks later, you're not building an AI product anymore. You're maintaining a pile of glue code — one fragile connector for every tool your AI needs to talk to. Each one has its own auth flow, its own data format, its own failure modes. And every time you switch to a different LLM provider, half of them break.</p><p>This is the reality most developers building with LLMs hit. The model itself is the easy part. Connecting it to the real world? That's where things fall apart.</p><p><h2>Why Should You Care?</h2></p><p>If you're building anything beyond a simple chatbot — an AI coding assistant, an internal knowledge tool, an automated workflow — you're going to run into this integration wall. And if you're interviewing at companies working on AI products (which is... most companies now), understanding how AI agents connect to external tools is the kind of systems-level thinking that separates strong candidates from prompt-wrapper builders.</p><p>Model Context Protocol, or MCP, is the industry's answer to this mess. And it's worth understanding now, because it's quickly becoming the standard way AI agents interact with the world.</p><p><h2>Let Me Back Up — What Is MCP, Really?</h2></p><p>MCP is an open protocol, originally created by Anthropic in late 2024 and now governed by the Linux Foundation. It standardizes how AI applications discover, connect to, and use external tools and data sources.</p><p>The analogy everyone uses is USB-C — and it's actually pretty accurate. Before USB-C, you had a different cable for every device. Micro-USB for your phone, Lightning for your iPad, some weird barrel connector for your laptop. USB-C said: one port, one standard, everything connects.</p><p>MCP does the same thing for AI integrations. Instead of building a custom connector for every tool (GitHub, Slack, databases, file systems, APIs), you build one MCP server for each tool, and any MCP-compatible AI client can use it.</p><p>![Mermaid Diagram](https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/what-is-model-context-protocol-mcp-and-why-its-being-called-usb-c-for-ai/mermaid-c5b60f7f8f7aaf5c7d8f30a6a53d0634.svg)</p><p><em>Before MCP: every AI app needs custom integration code for every tool. N apps times M tools = a mess.</em></p><p>![Mermaid Diagram](https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/what-is-model-context-protocol-mcp-and-why-its-being-called-usb-c-for-ai/mermaid-ce5948f6984b0f7b049183d2865847b0.svg)</p><p><em>After MCP: each tool exposes one standard server. Any AI app can connect using the same protocol.</em></p><p>That "N times M" problem — where N AI apps each need M custom integrations — becomes "N plus M." Each tool has one MCP server. Each AI app speaks MCP. Done.</p><p><h2>Okay, But How Does It Actually Work?</h2></p><p>MCP uses a <strong>client-host-server</strong> architecture. Let's trace through it step by step, like a request flowing through the system.</p><p><h3>The Three Players</h3></p><p><strong>Host</strong> — This is the AI application your user interacts with. Think of it as the main app: a chatbot UI, a coding IDE with AI features, or a custom internal tool. The host contains the LLM and orchestrates everything.</p><p><strong>Client</strong> — The client lives inside the host. It's the piece that knows how to speak the MCP protocol. When the LLM decides it needs to use an external tool, the client formats that request into a standard MCP message and sends it to the right server. One host can have multiple clients, but each client talks to exactly one server.</p><p><strong>Server</strong> — The server is the external service that actually does the work. It connects to a specific tool — your file system, a database, an API — and exposes that tool's capabilities in a format the LLM can understand.</p><p>![Mermaid Diagram](https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/what-is-model-context-protocol-mcp-and-why-its-being-called-usb-c-for-ai/mermaid-aa1c7018ec67d462fc24397b7981f4b5.svg)</p><p><em>The client-host-server flow: the host orchestrates, clients speak MCP, servers do the actual work.</em></p><p><h3>The Three Primitives</h3></p><p>Every MCP server exposes its capabilities through three types of things:</p><p><strong>Tools</strong> — These are actions the AI can execute. Think "create a file," "query the database," "send a message." Tools have defined inputs and outputs, so the LLM knows exactly what parameters to pass and what to expect back. This is the most common primitive — it's what makes AI agents actually <em>do</em> things.</p><p><strong>Resources</strong> — These are read-only data sources. File contents, database rows, API responses, log files. The AI can read them but not modify them through this primitive. Think of resources as the context the AI pulls in to make better decisions.</p><p><strong>Prompts</strong> — These are pre-written templates that help the AI use the server effectively. They're like instruction manuals that tell the LLM: "When using this tool, here's the best way to structure your request."</p><p>Under the hood, all of this is transported over JSON-RPC 2.0 — the same message format used by the Language Server Protocol that powers code editors like VS Code. If you've ever used Go-to-Definition or auto-complete in your IDE, you've already used a protocol built on similar ideas.</p><p><h3>What a Real Flow Looks Like</h3></p><p>Here's what happens when you ask your AI assistant to "find all open bugs assigned to me in GitHub":</p><p>1. The host receives your message and sends it to the LLM</p>
+      <h1>What Is Model Context Protocol (MCP) — And Why It's Being Called USB-C for AI</h1></p><p><strong>Your LLM is smart. But without a way to talk to the outside world, it's smart in a locked room.</strong></p><p>---</p><p><h2>The Tool That Can't Use Any Tools</h2></p><p>You've built something cool — an AI assistant that answers questions about your codebase. You wire it up to GPT or Claude, feed it your docs, and it works. Then someone asks: "Can it also create a Jira ticket when it finds a bug?" Sure, you think. You write a custom integration. Then: "Can it also read from our Postgres database?" Another custom connector. "What about Slack notifications?" Another one.</p><p>Three weeks later, you're not building an AI product anymore. You're maintaining a pile of glue code — one fragile connector for every tool your AI needs to talk to. Each one has its own auth flow, its own data format, its own failure modes. And every time you switch to a different LLM provider, half of them break.</p><p>This is the reality most developers building with LLMs hit. The model itself is the easy part. Connecting it to the real world? That's where things fall apart.</p><p><h2>Why Should You Care?</h2></p><p>If you're building anything beyond a simple chatbot — an AI coding assistant, an internal knowledge tool, an automated workflow — you're going to run into this integration wall. And if you're interviewing at companies working on AI products (which is... most companies now), understanding how AI agents connect to external tools is the kind of systems-level thinking that separates strong candidates from prompt-wrapper builders.</p><p>Model Context Protocol, or MCP, is the industry's answer to this mess. And it's worth understanding now, because it's quickly becoming the standard way AI agents interact with the world.</p><p><h2>Let Me Back Up — What Is MCP, Really?</h2></p><p>MCP is an open protocol, originally created by Anthropic in late 2024 and now governed by the Linux Foundation. It standardizes how AI applications discover, connect to, and use external tools and data sources.</p><p>The analogy everyone uses is USB-C — and it's actually pretty accurate. Before USB-C, you had a different cable for every device. Micro-USB for your phone, Lightning for your iPad, some weird barrel connector for your laptop. USB-C said: one port, one standard, everything connects.</p><p>MCP does the same thing for AI integrations. Instead of building a custom connector for every tool (GitHub, Slack, databases, file systems, APIs), you build one MCP server for each tool, and any MCP-compatible AI client can use it.</p><p>!<a href="https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/what-is-model-context-protocol-mcp-and-why-its-being-called-usb-c-for-ai/mermaid-c5b60f7f8f7aaf5c7d8f30a6a53d0634.svg" target="_blank" rel="noopener">Mermaid Diagram</a></p><p><em>Before MCP: every AI app needs custom integration code for every tool. N apps times M tools = a mess.</em></p><p>!<a href="https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/what-is-model-context-protocol-mcp-and-why-its-being-called-usb-c-for-ai/mermaid-ce5948f6984b0f7b049183d2865847b0.svg" target="_blank" rel="noopener">Mermaid Diagram</a></p><p><em>After MCP: each tool exposes one standard server. Any AI app can connect using the same protocol.</em></p><p>That "N times M" problem — where N AI apps each need M custom integrations — becomes "N plus M." Each tool has one MCP server. Each AI app speaks MCP. Done.</p><p><h2>Okay, But How Does It Actually Work?</h2></p><p>MCP uses a <strong>client-host-server</strong> architecture. Let's trace through it step by step, like a request flowing through the system.</p><p><h3>The Three Players</h3></p><p><strong>Host</strong> — This is the AI application your user interacts with. Think of it as the main app: a chatbot UI, a coding IDE with AI features, or a custom internal tool. The host contains the LLM and orchestrates everything.</p><p><strong>Client</strong> — The client lives inside the host. It's the piece that knows how to speak the MCP protocol. When the LLM decides it needs to use an external tool, the client formats that request into a standard MCP message and sends it to the right server. One host can have multiple clients, but each client talks to exactly one server.</p><p><strong>Server</strong> — The server is the external service that actually does the work. It connects to a specific tool — your file system, a database, an API — and exposes that tool's capabilities in a format the LLM can understand.</p><p>!<a href="https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/what-is-model-context-protocol-mcp-and-why-its-being-called-usb-c-for-ai/mermaid-aa1c7018ec67d462fc24397b7981f4b5.svg" target="_blank" rel="noopener">Mermaid Diagram</a></p><p><em>The client-host-server flow: the host orchestrates, clients speak MCP, servers do the actual work.</em></p><p><h3>The Three Primitives</h3></p><p>Every MCP server exposes its capabilities through three types of things:</p><p><strong>Tools</strong> — These are actions the AI can execute. Think "create a file," "query the database," "send a message." Tools have defined inputs and outputs, so the LLM knows exactly what parameters to pass and what to expect back. This is the most common primitive — it's what makes AI agents actually <em>do</em> things.</p><p><strong>Resources</strong> — These are read-only data sources. File contents, database rows, API responses, log files. The AI can read them but not modify them through this primitive. Think of resources as the context the AI pulls in to make better decisions.</p><p><strong>Prompts</strong> — These are pre-written templates that help the AI use the server effectively. They're like instruction manuals that tell the LLM: "When using this tool, here's the best way to structure your request."</p><p>Under the hood, all of this is transported over JSON-RPC 2.0 — the same message format used by the Language Server Protocol that powers code editors like VS Code. If you've ever used Go-to-Definition or auto-complete in your IDE, you've already used a protocol built on similar ideas.</p><p><h3>What a Real Flow Looks Like</h3></p><p>Here's what happens when you ask your AI assistant to "find all open bugs assigned to me in GitHub":</p><p>1. The host receives your message and sends it to the LLM
 <p>2. The LLM decides it needs the GitHub tool and outputs a tool call</p>
 <p>3. The MCP client formats this as a JSON-RPC request and sends it to the GitHub MCP server</p>
 <p>4. The server authenticates with GitHub's API, fetches your assigned issues, and returns the data</p>
@@ -56,6 +276,9 @@
 <p>- <strong>Try the mcp-agent framework</strong> on GitHub (lastmile-ai/mcp-agent) — it abstracts away the boilerplate and lets you focus on what your agent actually does.</p>
 <p>- <strong>Build a simple MCP server</strong> that wraps an API you already use — maybe your college's timetable system, a weather API, or a local file search. Then connect it to Claude Desktop or any MCP-compatible client and watch your LLM suddenly become useful in the real world.</p><p>For deeper reading, search for "MCP Gateway patterns" — this is the production architecture pattern that's emerging for managing multiple MCP servers at scale, and it's the kind of systems design knowledge that shows up in interviews.</p><p>---</p><p><strong>Remember that pile of glue code — one custom connector for every tool, breaking every time you switch providers? MCP doesn't eliminate the work of integrating tools, but it gives you a standard to build against. One protocol, one message format, any AI client. Your LLM was smart before. Now it has hands.</strong></p>
     </div>
-  </article>
+    <footer class="footer">
+      <p>&copy; 2026 Shibin. All rights reserved.</p>
+    </footer>
+  </div>
 </body>
 </html>
