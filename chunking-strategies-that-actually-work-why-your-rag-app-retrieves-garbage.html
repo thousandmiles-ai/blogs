@@ -3,60 +3,283 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Fixed-size, recursive, semantic — everyone has an opinion on the 'best' chunking strategy. The 2026 benchmarks are in, and the results will surprise you. Here's what actually works and why.">
+  <meta name="description" content="Fixed-size, recursive, semantic — everyone has an opinion on the &#039;best&#039; chunking strategy. The 2026 benchmarks are in, and the results will surprise you. Here&#039;s what actually works and why.">
   <meta name="author" content="Shibin">
+  <meta property="og:title" content="Chunking Strategies That Actually Work — Why Your RAG App Retrieves Garbage">
+  <meta property="og:description" content="Fixed-size, recursive, semantic — everyone has an opinion on the &#039;best&#039; chunking strategy. The 2026 benchmarks are in, and the results will surprise you. Here&#039;s what actually works and why.">
+  <meta property="og:type" content="article">
   <title>Chunking Strategies That Actually Work — Why Your RAG App Retrieves Garbage</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f8f9fa;
+      --bg-code: #f6f8fa;
+      --text-primary: #1a202c;
+      --text-secondary: #4a5568;
+      --text-tertiary: #718096;
+      --border-color: #e2e8f0;
+      --accent-color: #3b82f6;
+      --accent-hover: #2563eb;
+      --tag-bg: #e0e7ff;
+      --tag-text: #3730a3;
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1a202c;
+        --bg-secondary: #2d3748;
+        --bg-code: #2d3748;
+        --text-primary: #f7fafc;
+        --text-secondary: #e2e8f0;
+        --text-tertiary: #a0aec0;
+        --border-color: #4a5568;
+        --accent-color: #60a5fa;
+        --accent-hover: #3b82f6;
+        --tag-bg: #3730a3;
+        --tag-text: #e0e7ff;
+      }
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.7;
+      color: var(--text-primary);
+      background: var(--bg-primary);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .container {
       max-width: 800px;
       margin: 0 auto;
-      padding: 20px;
-      color: #333;
+      padding: 2rem 1.5rem;
     }
-    h1 { color: #2c3e50; margin-bottom: 10px; }
-    .meta { color: #7f8c8d; margin-bottom: 20px; font-size: 14px; }
-    .tags { margin: 20px 0; }
+
+    .header {
+      margin-bottom: 3rem;
+    }
+
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      color: var(--accent-color);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 2rem;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover {
+      color: var(--accent-hover);
+    }
+
+    .back-link::before {
+      content: "←";
+      margin-right: 0.5rem;
+    }
+
+    article h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1.2;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+    }
+
+    @media (max-width: 640px) {
+      article h1 {
+        font-size: 2rem;
+      }
+    }
+
+    .meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--text-tertiary);
+      font-size: 0.875rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .meta-divider {
+      color: var(--border-color);
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+
     .tag {
       display: inline-block;
-      background: #ecf0f1;
-      padding: 5px 10px;
-      margin-right: 5px;
-      border-radius: 3px;
-      font-size: 12px;
+      background: var(--tag-bg);
+      color: var(--tag-text);
+      padding: 0.375rem 0.875rem;
+      border-radius: 0.375rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      transition: transform 0.2s;
     }
-    img { max-width: 100%; height: auto; }
-    code {
-      background: #f4f4f4;
-      padding: 2px 6px;
-      border-radius: 3px;
-      font-family: 'Courier New', monospace;
+
+    .tag:hover {
+      transform: translateY(-1px);
+    }
+
+    .content {
+      font-size: 1.0625rem;
+      color: var(--text-secondary);
+    }
+
+    .content h2 {
+      font-size: 1.875rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 2.5rem 0 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .content h3 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 2rem 0 1rem;
+    }
+
+    .content h4 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 1.5rem 0 0.75rem;
+    }
+
+    .content p {
+      margin: 1rem 0;
+      line-height: 1.8;
+    }
+
+    .content strong {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .content a {
+      color: var(--accent-color);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s;
+    }
+
+    .content a:hover {
+      border-bottom-color: var(--accent-color);
+    }
+
+    .content code {
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      font-size: 0.875em;
+      background: var(--bg-code);
+      padding: 0.2em 0.4em;
+      border-radius: 0.25rem;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    .content pre {
+      background: var(--bg-code);
+      padding: 1.25rem;
+      border-radius: 0.5rem;
+      overflow-x: auto;
+      margin: 1.5rem 0;
+      border: 1px solid var(--border-color);
+    }
+
+    .content pre code {
+      background: none;
+      padding: 0;
+      border: none;
+      font-size: 0.875rem;
+      line-height: 1.6;
+    }
+
+    .content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 0.5rem;
+      margin: 2rem 0;
+      box-shadow: var(--shadow-md);
+    }
+
+    .content ul, .content ol {
+      margin: 1rem 0 1rem 1.5rem;
+    }
+
+    .content li {
+      margin: 0.5rem 0;
+    }
+
+    .content blockquote {
+      border-left: 4px solid var(--accent-color);
+      padding-left: 1rem;
+      margin: 1.5rem 0;
+      color: var(--text-tertiary);
+      font-style: italic;
+    }
+
+    .footer {
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+      text-align: center;
+      color: var(--text-tertiary);
+      font-size: 0.875rem;
     }
   </style>
 </head>
 <body>
-  <article>
-    <h1>Chunking Strategies That Actually Work — Why Your RAG App Retrieves Garbage</h1>
-    <div class="meta">
-      <span>By Shibin</span> •
-      <span>2026-01-25</span>
+  <div class="container">
+    <a href="index.html" class="back-link">All Posts</a>
+    <div class="header">
+      <article>
+        <h1>Chunking Strategies That Actually Work — Why Your RAG App Retrieves Garbage</h1>
+        <div class="meta">
+          <span>Shibin</span>
+          <span class="meta-divider">•</span>
+          <time datetime="2026-01-25">January 24, 2026</time>
+        </div>
+        <div class="tags">
+          <span class="tag">Learning</span><span class="tag">AI</span><span class="tag">Software Engineering</span>
+        </div>
+      </article>
     </div>
-    <div class="tags">
-        <span class="tag">Learning</span><span class="tag">AI</span><span class="tag">Software Engineering</span>
-      </div>
     <div class="content">
-      <p><h1>Chunking Strategies That Actually Work — Why Your RAG App Retrieves Garbage</h1></p><p><strong>The most boring part of your RAG pipeline is also the most consequential. Get chunking wrong, and nothing downstream can save you.</strong></p><p>---</p><p><h2>The Contract That Lied</h2></p><p>Picture this. You're building a legal document assistant. A lawyer asks: "Is the company liable for damages in cases of force majeure?" Your RAG system retrieves a chunk that confidently states: "The company is liable for all damages arising from service interruptions." Clear answer, right?</p><p>Except... the original document said: "The company is liable for all damages arising from service interruptions, <strong>except in cases of force majeure as defined in Section 12.</strong>" Your chunker, set to split every 500 tokens, sliced the sentence right between "interruptions" and "except." The exception — the most important part — ended up in the next chunk. That chunk didn't get retrieved because the query was about liability, not about Section 12 definitions.</p><p>One bad split. A completely wrong answer. And the user has no idea because the retrieved chunk looked perfectly valid.</p><p>This isn't a contrived example. This pattern plays out constantly in production RAG systems. Tables split in half. Lists separated from their headers. Paragraphs that say "as mentioned above" — but "above" is in a different chunk that wasn't retrieved. Chunking errors are silent, invisible, and devastating.</p><p><h2>Why Should You Care?</h2></p><p>Chunking is the first real decision in any RAG pipeline, and it's the one most developers spend the least time on. Everyone obsesses over embedding models, vector databases, and LLM selection — but the quality of your chunks puts a hard ceiling on everything else. You can't retrieve what you've destroyed.</p><p>And here's what makes it interesting: the 2026 benchmarks flipped a lot of assumptions on their head. The fanciest chunking methods? They're not winning. Understanding why requires understanding what each strategy actually does — and that's knowledge that shows up in both system design interviews and production debugging.</p><p><h2>Let Me Back Up — What Is Chunking and Why Do We Need It?</h2></p><p>Before your documents go into a vector database, they need to be broken into smaller pieces. There are two reasons for this.</p><p>First, embedding models have token limits. Most models cap out at 512 or 8,192 tokens. You can't embed a 50-page PDF as a single unit.</p><p>Second — and this is the less obvious reason — you want precision in retrieval. If your entire document is one big chunk, any query about any topic in that document will retrieve the whole thing. The LLM then has to find the needle in a haystack. Small, focused chunks mean the retriever can surface exactly the paragraph that answers the question.</p><p>But "small and focused" creates its own problem: the smaller the chunk, the more context it loses. A chunk that says "this approach" without telling you what "this" refers to is useless. The art of chunking is finding the sweet spot between precision and context.</p><p>![Mermaid Diagram](https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/chunking-strategies-that-actually-work-why-your-rag-app-retrieves-garbage/mermaid-cc8d0429cc0ab8995f430019eb00a7d5.svg)</p><p><em>The chunking step sits between your raw documents and the vector database. It determines the quality of everything downstream.</em></p><p><h2>The Three Strategies — Explained Like You're Pair-Programming</h2></p><p><h3>Strategy 1: Fixed-Size Chunking</h3></p><p>This is the "I don't want to think about it" approach. You pick a number — say 500 tokens — and split the text every 500 tokens. Done.</p><p>It's dead simple to implement, fast to run, and produces predictable chunk sizes. Most tutorials use this as the default, which is why most beginners start here.</p><p>The problem? It has zero awareness of your text's structure. It will split mid-sentence, mid-paragraph, mid-table. That liability clause we talked about? Fixed-size chunking is exactly how it gets destroyed.</p><p>The one saving grace is <strong>overlap</strong>. By repeating the last 50–100 tokens of each chunk at the beginning of the next one, you create a buffer zone where boundary information isn't completely lost. It's a patch, not a fix — but it helps more than you'd expect.</p><p><strong>When it works:</strong> Flat, unstructured text like logs, transcripts, or scraped web content where there's no meaningful structure to preserve.</p><p><h3>Strategy 2: Recursive Character Splitting</h3></p><p>This is the strategy that actually won the 2026 benchmarks — and it's not even that complicated.</p><p>Instead of blindly splitting every N tokens, recursive splitting tries a hierarchy of separators. First, it tries to split on double newlines (paragraph breaks). If the resulting chunks are still too large, it splits on single newlines. Still too large? Sentences. Still too large? Words.</p><p>The key insight: it respects natural boundaries first and only gets more aggressive when it has to. A 500-token paragraph stays intact. A 2,000-token section gets split at paragraph boundaries, not mid-sentence.</p><p>Think of it like cutting a pizza. Fixed-size is a grid pattern — equal pieces but you cut through toppings. Recursive is cutting along the natural slice lines first, and only cutting slices in half if they're too big.</p><p>Most frameworks (LangChain, LlamaIndex) use this as their `RecursiveCharacterTextSplitter`. The default separator hierarchy is: `["\n\n", "\n", " ", ""]` — paragraphs, lines, words, characters.</p><p><strong>When it works:</strong> Almost everything. The 2026 FloTorch benchmark tested seven strategies across thousands of documents, and recursive splitting at 512 tokens achieved the highest answer accuracy and retrieval F1 scores.</p><p><h3>Strategy 3: Semantic Chunking</h3></p><p>Okay, here's where it gets interesting — and controversial.</p><p>Semantic chunking uses embeddings to determine where to split. It embeds each sentence individually, then measures the similarity between consecutive sentences. When the similarity drops below a threshold — meaning the topic changed — it places a split there.</p><p>The idea is elegant: instead of splitting based on character count, you split based on meaning. Each chunk should be a coherent unit about one topic.</p><p>The problem? It's expensive and surprisingly inconsistent. You need to generate embeddings for every sentence just to decide where to split. For a large corpus, that means thousands of API calls or significant local compute before you've even started indexing.</p><p>And the 2026 benchmarks showed something counterintuitive: semantic chunking often produced worse retrieval than recursive splitting. Why? Because semantic chunks vary wildly in size. Some end up with 50 tokens (too small for meaningful embedding), others with 2,000+ tokens (too large for precise retrieval). The inconsistent size makes it harder for the retriever to compare chunks fairly.</p><p>![Mermaid Diagram](https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/chunking-strategies-that-actually-work-why-your-rag-app-retrieves-garbage/mermaid-9b2e150504e2a706d30736fb24d83922.svg)</p><p><em>The same legal clause, chunked three ways. Fixed-size breaks it. Recursive preserves it. Semantic groups it by topic but may bundle too much.</em></p><p><strong>When it works:</strong> Multi-topic narrative documents where topics shift unpredictably — research papers, long blog posts, interview transcripts. But only if you can afford the compute and are willing to tune the similarity threshold.</p><p><h2>The 2026 Surprise — Why Simpler Is Winning</h2></p><p>Here's what caught everyone off guard. When comprehensive benchmarks tested all these strategies head-to-head, the ranking was:</p><p>1. <strong>Recursive splitting (512 tokens)</strong> — highest accuracy, highest retrieval F1</p>
+      <h1>Chunking Strategies That Actually Work — Why Your RAG App Retrieves Garbage</h1></p><p><strong>The most boring part of your RAG pipeline is also the most consequential. Get chunking wrong, and nothing downstream can save you.</strong></p><p>---</p><p><h2>The Contract That Lied</h2></p><p>Picture this. You're building a legal document assistant. A lawyer asks: "Is the company liable for damages in cases of force majeure?" Your RAG system retrieves a chunk that confidently states: "The company is liable for all damages arising from service interruptions." Clear answer, right?</p><p>Except... the original document said: "The company is liable for all damages arising from service interruptions, <strong>except in cases of force majeure as defined in Section 12.</strong>" Your chunker, set to split every 500 tokens, sliced the sentence right between "interruptions" and "except." The exception — the most important part — ended up in the next chunk. That chunk didn't get retrieved because the query was about liability, not about Section 12 definitions.</p><p>One bad split. A completely wrong answer. And the user has no idea because the retrieved chunk looked perfectly valid.</p><p>This isn't a contrived example. This pattern plays out constantly in production RAG systems. Tables split in half. Lists separated from their headers. Paragraphs that say "as mentioned above" — but "above" is in a different chunk that wasn't retrieved. Chunking errors are silent, invisible, and devastating.</p><p><h2>Why Should You Care?</h2></p><p>Chunking is the first real decision in any RAG pipeline, and it's the one most developers spend the least time on. Everyone obsesses over embedding models, vector databases, and LLM selection — but the quality of your chunks puts a hard ceiling on everything else. You can't retrieve what you've destroyed.</p><p>And here's what makes it interesting: the 2026 benchmarks flipped a lot of assumptions on their head. The fanciest chunking methods? They're not winning. Understanding why requires understanding what each strategy actually does — and that's knowledge that shows up in both system design interviews and production debugging.</p><p><h2>Let Me Back Up — What Is Chunking and Why Do We Need It?</h2></p><p>Before your documents go into a vector database, they need to be broken into smaller pieces. There are two reasons for this.</p><p>First, embedding models have token limits. Most models cap out at 512 or 8,192 tokens. You can't embed a 50-page PDF as a single unit.</p><p>Second — and this is the less obvious reason — you want precision in retrieval. If your entire document is one big chunk, any query about any topic in that document will retrieve the whole thing. The LLM then has to find the needle in a haystack. Small, focused chunks mean the retriever can surface exactly the paragraph that answers the question.</p><p>But "small and focused" creates its own problem: the smaller the chunk, the more context it loses. A chunk that says "this approach" without telling you what "this" refers to is useless. The art of chunking is finding the sweet spot between precision and context.</p><p>!<a href="https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/chunking-strategies-that-actually-work-why-your-rag-app-retrieves-garbage/mermaid-cc8d0429cc0ab8995f430019eb00a7d5.svg" target="_blank" rel="noopener">Mermaid Diagram</a></p><p><em>The chunking step sits between your raw documents and the vector database. It determines the quality of everything downstream.</em></p><p><h2>The Three Strategies — Explained Like You're Pair-Programming</h2></p><p><h3>Strategy 1: Fixed-Size Chunking</h3></p><p>This is the "I don't want to think about it" approach. You pick a number — say 500 tokens — and split the text every 500 tokens. Done.</p><p>It's dead simple to implement, fast to run, and produces predictable chunk sizes. Most tutorials use this as the default, which is why most beginners start here.</p><p>The problem? It has zero awareness of your text's structure. It will split mid-sentence, mid-paragraph, mid-table. That liability clause we talked about? Fixed-size chunking is exactly how it gets destroyed.</p><p>The one saving grace is <strong>overlap</strong>. By repeating the last 50–100 tokens of each chunk at the beginning of the next one, you create a buffer zone where boundary information isn't completely lost. It's a patch, not a fix — but it helps more than you'd expect.</p><p><strong>When it works:</strong> Flat, unstructured text like logs, transcripts, or scraped web content where there's no meaningful structure to preserve.</p><p><h3>Strategy 2: Recursive Character Splitting</h3></p><p>This is the strategy that actually won the 2026 benchmarks — and it's not even that complicated.</p><p>Instead of blindly splitting every N tokens, recursive splitting tries a hierarchy of separators. First, it tries to split on double newlines (paragraph breaks). If the resulting chunks are still too large, it splits on single newlines. Still too large? Sentences. Still too large? Words.</p><p>The key insight: it respects natural boundaries first and only gets more aggressive when it has to. A 500-token paragraph stays intact. A 2,000-token section gets split at paragraph boundaries, not mid-sentence.</p><p>Think of it like cutting a pizza. Fixed-size is a grid pattern — equal pieces but you cut through toppings. Recursive is cutting along the natural slice lines first, and only cutting slices in half if they're too big.</p><p>Most frameworks (LangChain, LlamaIndex) use this as their <code>RecursiveCharacterTextSplitter</code>. The default separator hierarchy is: <code>["\n\n", "\n", " ", ""]</code> — paragraphs, lines, words, characters.</p><p><strong>When it works:</strong> Almost everything. The 2026 FloTorch benchmark tested seven strategies across thousands of documents, and recursive splitting at 512 tokens achieved the highest answer accuracy and retrieval F1 scores.</p><p><h3>Strategy 3: Semantic Chunking</h3></p><p>Okay, here's where it gets interesting — and controversial.</p><p>Semantic chunking uses embeddings to determine where to split. It embeds each sentence individually, then measures the similarity between consecutive sentences. When the similarity drops below a threshold — meaning the topic changed — it places a split there.</p><p>The idea is elegant: instead of splitting based on character count, you split based on meaning. Each chunk should be a coherent unit about one topic.</p><p>The problem? It's expensive and surprisingly inconsistent. You need to generate embeddings for every sentence just to decide where to split. For a large corpus, that means thousands of API calls or significant local compute before you've even started indexing.</p><p>And the 2026 benchmarks showed something counterintuitive: semantic chunking often produced worse retrieval than recursive splitting. Why? Because semantic chunks vary wildly in size. Some end up with 50 tokens (too small for meaningful embedding), others with 2,000+ tokens (too large for precise retrieval). The inconsistent size makes it harder for the retriever to compare chunks fairly.</p><p>!<a href="https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/chunking-strategies-that-actually-work-why-your-rag-app-retrieves-garbage/mermaid-9b2e150504e2a706d30736fb24d83922.svg" target="_blank" rel="noopener">Mermaid Diagram</a></p><p><em>The same legal clause, chunked three ways. Fixed-size breaks it. Recursive preserves it. Semantic groups it by topic but may bundle too much.</em></p><p><strong>When it works:</strong> Multi-topic narrative documents where topics shift unpredictably — research papers, long blog posts, interview transcripts. But only if you can afford the compute and are willing to tune the similarity threshold.</p><p><h2>The 2026 Surprise — Why Simpler Is Winning</h2></p><p>Here's what caught everyone off guard. When comprehensive benchmarks tested all these strategies head-to-head, the ranking was:</p><p>1. <strong>Recursive splitting (512 tokens)</strong> — highest accuracy, highest retrieval F1
 <p>2. <strong>Fixed-size (512 tokens with overlap)</strong> — close second</p>
 <p>3. <strong>Semantic chunking</strong> — middle of the pack</p>
 <p>4. <strong>Proposition-based chunking</strong> (using LLMs to decompose) — expensive, marginally better on some tasks</p><p>The reason simpler methods won isn't that they're inherently superior — it's that they produce consistent, predictable chunk sizes. Embedding models and retrievers are optimized for chunks in the 256–512 token range. When your chunks are consistently in that range, the entire pipeline works more predictably.</p><p>Semantic and proposition-based methods also create 3–5x more chunks for the same corpus. More chunks means more embeddings, more storage, more compute, and — counterintuitively — more noise in retrieval. The cost multiplier compounds at every layer.</p><p>Does the 3% accuracy improvement from semantic chunking justify 10x the processing cost? For most applications, no.</p><p><h2>Mistakes That Bite — The Chunking Errors Nobody Talks About</h2></p><p><strong>"I'll just use the default 1,000-token chunks."</strong> This is the most common error. Most tutorials and framework defaults use 1,000 tokens. But most embedding models are optimized for 256–512 tokens. Larger chunks dilute the embedding — instead of representing one specific idea, they represent a fuzzy average of several ideas. Drop to 512 with 50-token overlap and measure the difference.</p><p><strong>"Chunking is a one-time decision."</strong> Different document types need different strategies. Your API docs might work perfectly with recursive splitting, while your meeting transcripts might need semantic chunking. Don't apply one strategy to your entire corpus blindly. Profile your document types and test each one.</p><p><strong>"Tables and code can be chunked like prose."</strong> They absolutely cannot. A table split in half is worse than useless — it's misleading. Code split mid-function is syntactically invalid. Extract tables and code blocks as separate units, preserve their structure, and add surrounding context (the header before the table, the function name, the paragraph that references it).</p><p><h2>Now Go Break Something — Where to Go from Here</h2></p><p>Here's a weekend experiment that'll teach you more about chunking than any article:</p><p>- <strong>Take a document you know well</strong> — your project docs, college notes, anything where you can verify the answers.</p>
-<p>- <strong>Chunk it three ways</strong> using LangChain's splitters: `CharacterTextSplitter` (fixed), `RecursiveCharacterTextSplitter` (recursive), and `SemanticChunker` from langchain-experimental.</p>
+<p>- <strong>Chunk it three ways</strong> using LangChain's splitters: <code>CharacterTextSplitter</code> (fixed), <code>RecursiveCharacterTextSplitter</code> (recursive), and <code>SemanticChunker</code> from langchain-experimental.</p>
 <p>- <strong>Ask the same 10 questions</strong> to a RAG pipeline using each chunking strategy.</p>
 <p>- <strong>Compare the retrieved chunks</strong> side by side. You'll immediately see where fixed-size destroys context, where recursive preserves it, and where semantic produces inconsistent sizes.</p><p>For deeper exploration:</p><p>- Search for "FloTorch RAG chunking benchmark 2026" — the full benchmark results with methodology</p>
 <p>- The LangChain docs have a great comparison page for all their text splitters</p>
 <p>- Check out the Weaviate blog's chunking guide — it has practical examples for different document types</p>
 <p>- For advanced work, look into "late chunking" — a newer approach where you embed the full document first and then chunk the embeddings, preserving long-range context</p><p>---</p><p><strong>That legal document assistant that said "the company is liable for all damages"? It wasn't lying — it was reading the only chunk it had, and that chunk had been amputated mid-sentence. Swap to recursive splitting at 512 tokens with overlap, and the full clause — exception included — stays intact. The fix wasn't a better model or a smarter prompt. It was a better cut.</strong></p>
     </div>
-  </article>
+    <footer class="footer">
+      <p>&copy; 2026 Shibin. All rights reserved.</p>
+    </footer>
+  </div>
 </body>
 </html>
