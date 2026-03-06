@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="You've heard MCP is the 'USB-C for AI.' But what does it take to actually build one? A hands-on walkthrough of creating an MCP server from scratch using Python and FastMCP — with tools your LLM can call.">
+  <meta name="author" content="Shibin">
+  <title>Build Your First MCP Server in Python — A Weekend Project That Actually Impresses</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      color: #333;
+    }
+    h1 { color: #2c3e50; margin-bottom: 10px; }
+    .meta { color: #7f8c8d; margin-bottom: 20px; font-size: 14px; }
+    .tags { margin: 20px 0; }
+    .tag {
+      display: inline-block;
+      background: #ecf0f1;
+      padding: 5px 10px;
+      margin-right: 5px;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+    img { max-width: 100%; height: auto; }
+    code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+  <article>
+    <h1>Build Your First MCP Server in Python — A Weekend Project That Actually Impresses</h1>
+    <div class="meta">
+      <span>By Shibin</span> •
+      <span>2026-01-22</span>
+    </div>
+    <div class="tags">
+        <span class="tag">Learning</span><span class="tag">AI</span><span class="tag">Software Engineering</span>
+      </div>
+    <div class="content">
+      <p><h1>Build Your First MCP Server in Python — A Weekend Project That Actually Impresses</h1></p><p><strong>Everyone talks about MCP. Very few people have actually built a server. Here's how to be one of them — in about an hour.</strong></p><p>---</p><p><h2>The Moment Your LLM Gets Hands</h2></p><p>You've been playing with ChatGPT or Claude for months. Asking questions, generating code, summarizing documents. But there's always a wall: the model can only work with what you give it. Want it to check today's weather? You copy-paste from a browser. Want it to query your database? You run the query yourself and paste the results.</p><p>Now imagine you told your AI: "What's the weather in Chennai right now?" — and it actually went and fetched the answer. Not from training data. Not from a cached response. It called a real API, got real-time data, and gave you the result.</p><p>That's what an MCP server lets you do. You build a small Python service that exposes "tools" — functions your LLM can discover and call. The LLM sees what tools are available, decides which one to use, passes the right parameters, and gets the response back. No copy-pasting. No manual plumbing.</p><p>And the best part? The server you build works with any MCP-compatible client — Claude Desktop, Cursor, VS Code, or any custom app.</p><p><h2>Why Should You Care?</h2></p><p>Two reasons. First, MCP is becoming the standard way AI agents interact with external tools, adopted by both Anthropic and OpenAI, and governed by the Linux Foundation. Knowing how to build MCP servers is a genuinely useful skill for any AI-focused role.</p><p>Second — and more practically — this is one of the best portfolio projects you can build right now. Most people's AI projects are "I wrapped an API call in a chatbot." Building an MCP server shows you understand protocols, tool design, and how AI agents actually connect to the real world. That's a very different conversation in an interview.</p><p><h2>Let Me Back Up — What Are We Building?</h2></p><p>We're going to build a Python MCP server that exposes three tools to any LLM client:</p><p>1. <strong>get_weather</strong> — Fetches current weather for any city using a free API</p>
+<p>2. <strong>calculate</strong> — Evaluates a math expression safely</p>
+<p>3. <strong>random_fact</strong> — Returns a random fun fact (because why not)</p><p>The server will run locally on your machine. We'll connect it to Claude Desktop so you can actually chat with an AI that uses your tools. The whole thing takes about 50 lines of Python.</p><p>![Mermaid Diagram](https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/build-your-first-mcp-server-in-python-a-weekend-project-that-actually-impresses/mermaid-056538aabc236d2a39a78aa9be01e7bb.svg)</p><p><em>What we're building: a Python server that exposes tools to Claude Desktop via MCP.</em></p><p><h2>Okay, Let's Build It — Step by Step</h2></p><p><h3>Step 1: Set Up Your Environment</h3></p><p>You need Python 3.10 or higher. If you're on a Mac or Linux machine, you probably already have it. Check with `python3 --version`.</p><p>Create a project folder and set up a virtual environment:</p><p>```bash</p>
+<p>mkdir my-mcp-server && cd my-mcp-server</p>
+<p>python3 -m venv venv</p>
+<p>source venv/bin/activate  # On Windows: venv\Scripts\activate</p>
+<p>```</p><p>Install the MCP SDK. The recommended way is using `pip`:</p><p>```bash</p>
+<p>pip install "mcp[cli]" httpx</p>
+<p>```</p><p>`mcp` is the official MCP Python SDK. `httpx` is for making HTTP requests to external APIs. We're also pulling in FastMCP, which is included in the SDK and gives us a clean decorator-based API for defining tools.</p><p><h3>Step 2: Write the Server</h3></p><p>Create a file called `server.py`. Here's the entire thing:</p><p>```python</p>
+<p>from mcp.server.fastmcp import FastMCP</p>
+<p>import httpx</p>
+<p>import random</p><p><h1>Create the MCP server</h1></p>
+<p>mcp = FastMCP("my-first-server")</p><p><h1>Tool 1: Get weather for a city</h1></p>
+<p>@mcp.tool()</p>
+<p>async def get_weather(city: str) -> str:</p>
+<p>    """Get current weather for a city. Returns temperature and conditions."""</p>
+<p>    async with httpx.AsyncClient() as client:</p>
+<p>        response = await client.get(</p>
+<p>            f"https://wttr.in/{city}?format=j1"</p>
+<p>        )</p>
+<p>        data = response.json()</p>
+<p>        current = data["current_condition"][0]</p>
+<p>        temp = current["temp_C"]</p>
+<p>        desc = current["weatherDesc"][0]["value"]</p>
+<p>        return f"{city}: {temp}°C, {desc}"</p><p><h1>Tool 2: Safe calculator</h1></p>
+<p>@mcp.tool()</p>
+<p>async def calculate(expression: str) -> str:</p>
+<p>    """Evaluate a math expression safely. Example: '2 + 3 * 4'"""</p>
+<p>    allowed = set("0123456789+-*/.() ")</p>
+<p>    if not all(c in allowed for c in expression):</p>
+<p>        return "Error: Only numbers and basic operators allowed"</p>
+<p>    try:</p>
+<p>        result = eval(expression)  # Safe because we filtered input</p>
+<p>        return f"{expression} = {result}"</p>
+<p>    except Exception as e:</p>
+<p>        return f"Error: {str(e)}"</p><p><h1>Tool 3: Random fun fact</h1></p>
+<p>@mcp.tool()</p>
+<p>async def random_fact() -> str:</p>
+<p>    """Return a random fun fact about technology or science."""</p>
+<p>    facts = [</p>
+<p>        "The first computer bug was an actual bug — a moth found in a Harvard Mark II computer in 1947.",</p>
+<p>        "The first 1GB hard drive, introduced in 1980, weighed about 250 kg and cost $40,000.",</p>
+<p>        "About 90% of the world's data was created in the last two years.",</p>
+<p>        "The average smartphone today has more computing power than NASA had for the Apollo 11 moon landing.",</p>
+<p>        "The first website ever created is still online at info.cern.ch.",</p>
+<p>    ]</p>
+<p>    return random.choice(facts)</p><p>if __name__ == "__main__":</p>
+<p>    mcp.run(transport="stdio")</p>
+<p>```</p><p>That's it. Seriously. Let's break down what's happening.</p><p><h3>Step 3: Understand What You Just Wrote</h3></p><p><strong>FastMCP</strong> is a wrapper from the official SDK that makes defining tools dead simple. You create an instance, decorate your functions with `@mcp.tool()`, and FastMCP handles all the MCP protocol stuff — JSON-RPC messages, tool discovery, parameter validation.</p><p>Each tool function has:</p>
+<p>- <strong>Type hints</strong> — `city: str` tells the LLM what parameters the tool expects</p>
+<p>- <strong>A docstring</strong> — This is critical. The LLM reads this to decide when to use the tool. Write it like you're explaining the tool to a person.</p>
+<p>- <strong>A return value</strong> — A string that gets sent back to the LLM as the observation</p><p>The `mcp.run(transport="stdio")` at the bottom starts the server using standard input/output — this is how Claude Desktop communicates with local MCP servers. No HTTP, no ports, just stdin/stdout.</p><p>![Mermaid Diagram](https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/build-your-first-mcp-server-in-python-a-weekend-project-that-actually-impresses/mermaid-9716503505c55b9235c7aae41b08f67b.svg)</p><p><em>The full flow: you ask a question, Claude decides to use your tool, the server calls the API, and the result flows back.</em></p><p><h3>Step 4: Connect to Claude Desktop</h3></p><p>Now the fun part — making Claude Desktop actually use your server.</p><p>Open Claude Desktop and go to <strong>Settings > Developer > Edit Config</strong>. This opens a JSON file. Add your server to it:</p><p>```json</p>
+<p>{</p>
+<p>  "mcpServers": {</p>
+<p>    "my-first-server": {</p>
+<p>      "command": "python3",</p>
+<p>      "args": ["/full/path/to/your/server.py"],</p>
+<p>      "env": {}</p>
+<p>    }</p>
+<p>  }</p>
+<p>}</p>
+<p>```</p><p>Replace `/full/path/to/your/server.py` with the actual path to your file. Save, and restart Claude Desktop.</p><p>You should now see a small hammer icon in the chat input area — that means Claude has discovered your tools. Click it to see the three tools listed.</p><p><h3>Step 5: Test It</h3></p><p>Type into Claude: "What's the weather in Bangalore right now?"</p><p>Claude should recognize that it needs to use the `get_weather` tool, call your server, and return the live weather data. Try the calculator: "What's 15 * 37 + 42?" Try the fun fact: "Tell me a random tech fact."</p><p>Each time, you'll see Claude decide which tool to use, call it through your MCP server, and incorporate the result into its response. You've just given an LLM the ability to do things it couldn't do before.</p><p><h2>Making It Better — Ideas for Your Next Steps</h2></p><p>The basic server works, but here are a few directions to take it further:</p><p><strong>Add more tools.</strong> Wrap any API you use regularly — a to-do list API, a movie database, your college's timetable system, a GitHub API for checking your repos. Each tool is just another decorated function.</p><p><strong>Add resources.</strong> Tools let the LLM do things. Resources let it read things. You can expose file contents, database records, or API responses as read-only resources that the LLM can pull into its context.</p><p><strong>Try the inspector.</strong> The MCP SDK ships with a built-in inspector tool. Run `mcp dev server.py` to get a web UI where you can test your tools interactively without needing Claude Desktop. Super useful for debugging.</p><p><strong>Deploy it remotely.</strong> Local servers are great for development, but for production you'd want an HTTP-based transport (SSE or WebSocket). The FastMCP docs cover this — it's a one-line change from `stdio` to `sse`.</p><p><h2>Mistakes That Bite — Things That Trip Up Beginners</h2></p><p><strong>"My tools don't show up in Claude Desktop."</strong> The most common issue. Double-check: is the path in the config JSON absolute? Is the virtual environment activated? Did you restart Claude Desktop after editing the config? The server needs to start successfully for tools to appear.</p><p><strong>"The docstring doesn't matter, right?"</strong> Wrong. The LLM uses the docstring to decide whether and when to use your tool. A vague docstring like "does something with weather" will confuse the model. Be specific: "Get current weather for a city. Returns temperature in Celsius and conditions."</p><p><strong>"I'll just expose my entire database as a tool."</strong> Resist this urge. Each tool should do one specific thing. A tool called `query_anything` that accepts raw SQL is both a security nightmare and confusing for the LLM. Instead, create focused tools like `get_user_by_email` or `list_recent_orders`. Smaller, focused tools get used correctly more often.</p><p><h2>Now Go Break Something</h2></p><p>You've just built something that most developers only read about. An MCP server — the standard protocol that major AI labs are converging on — running on your machine, giving an LLM real-world capabilities.</p><p>Here's what to explore next:</p><p>- <strong>The official MCP docs</strong> at modelcontextprotocol.io have a quickstart guide and full API reference</p>
+<p>- <strong>The free Hugging Face MCP course</strong> walks through building servers and connecting them to agents, with hands-on exercises</p>
+<p>- <strong>FastMCP's GitHub repo</strong> has examples for advanced patterns like authentication, streaming, and resource management</p>
+<p>- Search for "MCP server examples" on GitHub — the community has built servers for Notion, Kubernetes, Spotify, and hundreds of other services. Reading other people's servers is one of the fastest ways to learn</p><p>---</p><p><strong>Remember staring at your LLM, wishing it could just check the weather or run a calculation instead of making you do it? Fifty lines of Python later, it can. That's what MCP is about — not replacing what LLMs do well, but giving them the tools to do what they couldn't. Your server is small. The pattern scales to anything.</strong></p>
+    </div>
+  </article>
+</body>
+</html>
