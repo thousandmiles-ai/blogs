@@ -297,7 +297,7 @@
 <p></code></pre></p><p>Result: Game over. The sandbox is useless.</p><p><h3>Threat 5: Side-Channel Attacks</h3></p><p>The code doesn't exfiltrate data directly. Instead, it:</p>
 <p>- Measures timing to infer secrets</p>
 <p>- Uses covert channels (disk I/O patterns, memory access)</p>
-<p>- Probes CPU caches to leak data</p><p>Result: Data leak that's nearly impossible to detect.</p><p>!<a href="https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/sandboxing-llm-generated-code-running-untrusted-ai-code-safely/mermaid-87b53519fb6cdc09ab722bc2da19a285.svg" target="_blank" rel="noopener">Mermaid Diagram</a></p><p><h2>Part 2: Sandbox Options (Tradeoffs)</h2></p><p><h3>Option 1: Docker Containers</h3></p><p><strong>The Idea:</strong> Run the code in a Docker container with limited resources and filesystem access.</p><p><pre><code class="language-dockerfile">FROM python:3.11-slim</p><p>WORKDIR /sandbox</p>
+<p>- Probes CPU caches to leak data</p><p>Result: Data leak that's nearly impossible to detect.</p><p><img src="https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/sandboxing-llm-generated-code-running-untrusted-ai-code-safely/mermaid-87b53519fb6cdc09ab722bc2da19a285.svg" alt="Mermaid Diagram" loading="lazy"></p><p><h2>Part 2: Sandbox Options (Tradeoffs)</h2></p><p><h3>Option 1: Docker Containers</h3></p><p><strong>The Idea:</strong> Run the code in a Docker container with limited resources and filesystem access.</p><p><pre><code class="language-dockerfile">FROM python:3.11-slim</p><p>WORKDIR /sandbox</p>
 <p>COPY user_code.py .</p><p>CMD ["python", "user_code.py"]</p>
 <p></code></pre></p><p>Run with restrictions:</p><p><pre><code class="language-bash">docker run \</p>
 <p>  --rm \</p>
@@ -365,7 +365,7 @@
 <p>- Fast iterations</p><p><strong>Cons:</strong></p>
 <p>- Cost per execution (fine for most use cases)</p>
 <p>- Vendor lock-in (but worth it for early stage)</p>
-<p>- Not for ultra-high-volume workloads</p><p><strong>When to use:</strong> If you're a startup or building an AI feature and don't want to manage infrastructure.</p><p><h2>Part 3: Layered Sandboxing (Defense in Depth)</h2></p><p>The smartest approach isn't a single sandbox. It's <strong>layers</strong>.</p><p>!<a href="https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/sandboxing-llm-generated-code-running-untrusted-ai-code-safely/mermaid-d001024da32ac1dcc52d8cf1f857fa10.svg" target="_blank" rel="noopener">Mermaid Diagram</a></p><p><h3>Layer 1: Input Validation</h3></p><p>Scan the code before executing:</p><p><pre><code class="language-python">def is_code_safe(code: str) -> bool:</p>
+<p>- Not for ultra-high-volume workloads</p><p><strong>When to use:</strong> If you're a startup or building an AI feature and don't want to manage infrastructure.</p><p><h2>Part 3: Layered Sandboxing (Defense in Depth)</h2></p><p>The smartest approach isn't a single sandbox. It's <strong>layers</strong>.</p><p><img src="https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/sandboxing-llm-generated-code-running-untrusted-ai-code-safely/mermaid-d001024da32ac1dcc52d8cf1f857fa10.svg" alt="Mermaid Diagram" loading="lazy"></p><p><h3>Layer 1: Input Validation</h3></p><p>Scan the code before executing:</p><p><pre><code class="language-python">def is_code_safe(code: str) -> bool:</p>
 <p>    dangerous_patterns = [</p>
 <p>        "os.system",</p>
 <p>        "subprocess",</p>
