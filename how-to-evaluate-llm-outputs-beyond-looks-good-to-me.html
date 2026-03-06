@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Your RAG pipeline returns an answer. It sounds confident. But is it actually correct? Turns out 'vibes-based evaluation' doesn't scale. Learn the metrics and frameworks that actually tell you if your LLM is hallucinating, missing context, or nailing it.">
+  <meta name="author" content="Shibin">
+  <title>How to Evaluate LLM Outputs — Beyond 'Looks Good to Me'</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      color: #333;
+    }
+    h1 { color: #2c3e50; margin-bottom: 10px; }
+    .meta { color: #7f8c8d; margin-bottom: 20px; font-size: 14px; }
+    .tags { margin: 20px 0; }
+    .tag {
+      display: inline-block;
+      background: #ecf0f1;
+      padding: 5px 10px;
+      margin-right: 5px;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+    img { max-width: 100%; height: auto; }
+    code {
+      background: #f4f4f4;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Courier New', monospace;
+    }
+  </style>
+</head>
+<body>
+  <article>
+    <h1>How to Evaluate LLM Outputs — Beyond 'Looks Good to Me'</h1>
+    <div class="meta">
+      <span>By Shibin</span> •
+      <span>2026-02-16</span>
+    </div>
+    <div class="tags">
+        <span class="tag">Learning</span><span class="tag">AI</span>
+      </div>
+    <div class="content">
+      <p><h2>The Classic Problem</h2></p><p>You've built a RAG pipeline. Your knowledge base is solid. Your retriever works fine. You run a test query, and the LLM spits out an answer that sounds <em>completely</em> confident. Grammar? Perfect. Structure? Coherent. Tone? Professional.</p><p>You copy it to your Slack channel: "It works!"</p><p>But then someone asks a follow-up question, and the answer contradicts itself. Or they check a fact and it's subtly wrong. Or they ask "where did you get that?" and you realize the LLM just... made it up.</p><p>That's not an error in your pipeline. That's an error in how you evaluated it.</p><p>If you're relying on "it looks right to me," you're in dangerous territory. The problem scales immediately: when you have 100 queries, 1000 queries, or a production system running 24/7, you can't manually inspect every output.</p><p>You need metrics.</p><p><h2>Why This Matters</h2></p><p><strong>Vibes-based evaluation breaks at scale.</strong> Human inspection is slow, inconsistent, and subjective. One person reads an answer and thinks "solid." Another reads the same answer and spots a hallucination. You're shipping an LLM system that nobody actually understands, and nobody can debug when it fails.</p><p>But here's the thing: traditional ML evaluation metrics don't work for language models. In classification, you have clear right/wrong answers. In RAG, there's no single "ground truth." The same query might have 10 correct answers depending on how you interpret it. And hallucinations are <em>genuinely</em> hard to spot automatically because the LLM is confident and grammatically flawless.</p><p>So we need new frameworks. We need to measure different dimensions separately, and we need tools that don't require a human to read every single output.</p><p><h2>The Core Challenge: Why LLM Eval Is Different</h2></p><p>Traditional ML evaluation assumes:</p>
+<p>- There's one right answer (binary classification, exact match, etc.)</p>
+<p>- Metrics are purely numerical (accuracy, precision, recall)</p>
+<p>- No middle ground between right and wrong</p><p>Language generation throws all of that out:</p>
+<p>- Multiple correct answers exist (paraphrasing, different phrasings, different correct facts)</p>
+<p>- Quality is multidimensional (you need to measure faithfulness <em>and</em> relevance, not just "accuracy")</p>
+<p>- Hallucinations look like correct answers—that's the whole problem</p><p>That's why LLM evaluation has evolved into a multi-metric framework where you evaluate different dimensions separately.</p><p><h2>The RAGAS Framework: Your Evaluation Toolkit</h2></p><p><strong>RAGAS</strong> (Retrieval Augmented Generation Assessment) is the most popular open-source framework for evaluating RAG systems. It provides a suite of metrics that work <em>without</em> requiring ground truth labels.</p><p>![Mermaid Diagram](https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/how-to-evaluate-llm-outputs-beyond-looks-good-to-me/mermaid-cd38f5b486c86c719d4cda7bfab20854.svg)</p><p><h3>The Core Metrics</h3></p><p><strong>Faithfulness</strong> — Does the answer contain hallucinations?</p><p>The metric works like this: an LLM extracts all <em>claims</em> made in the answer. Then it checks each claim against the retrieved context. If a claim isn't supported by the context, it's hallucinated.</p><p>Score: 0–1, where 1 means "everything is supported by the retrieved context."</p><p>Why it matters: This catches the sneaky case where your LLM generates grammatically perfect nonsense.</p><p><strong>Answer Relevancy</strong> — Is the answer actually relevant to the user's question?</p><p>Instead of asking a human "is this relevant?", RAGAS generates multiple synthetic questions from the answer using the LLM, then measures how similar those questions are to the original query.</p><p>Score: 0–1, where 1 means "the answer is directly answering what was asked."</p><p>Why it matters: An answer can be faithful to the context <em>and</em> completely miss what the user wanted.</p><p><strong>Context Precision</strong> — Are the most useful chunks ranked first?</p><p>When you retrieve 10 documents, is the most relevant one at position 1? Or buried at position 7? This metric measures whether the retriever ranked things in the right order.</p><p>Score: 0–1, where 1 means "every retrieved chunk is relevant."</p><p>Why it matters: If your LLM has to wade through junk to find useful context, it'll get confused or hallucinate.</p><p><strong>Context Recall</strong> — Did you retrieve everything needed?</p><p>This asks: given the correct answer, how much of the supporting context did the retriever actually find?</p><p>Score: 0–1, where 1 means "you got all the context needed to answer correctly."</p><p>Why it matters: If key context is missing, your LLM can't answer well, no matter how good it is.</p><p><h3>Putting It Together</h3></p><p>You're not checking one metric. You're checking four dimensions of a single evaluation:</p><p>- Faithfulness measures <em>hallucinations</em> → low faithfulness = your LLM is making things up</p>
+<p>- Answer relevancy measures <em>understanding the question</em> → low relevancy = wrong answer, right format</p>
+<p>- Context precision measures <em>retriever ranking</em> → low precision = retriever is mixing junk with gold</p>
+<p>- Context recall measures <em>completeness</em> → low recall = retriever missed important context</p><p>A healthy RAG system has all four scores high. If faithfulness is low, you have a hallucination problem. If recall is low, your retriever is weak.</p><p><h2>Beyond RAGAS: LLM-as-Judge</h2></p><p>RAGAS is great for RAG systems specifically. But what if your system is more general? What if you're not using retrieval?</p><p>That's where <strong>LLM-as-Judge</strong> comes in.</p><p>The idea is simple: use a powerful LLM (like GPT-4) to evaluate the outputs of another LLM, prompted to assign scores on dimensions like helpfulness, correctness, faithfulness, or safety.</p><p>```</p>
+<p>Judge prompt (simplified):</p>
+<p>"You are an expert evaluator. The user asked: [QUERY]</p>
+<p>The system responded: [ANSWER]</p>
+<p>Rate the response from 1-10 on correctness, helpfulness, and truthfulness.</p>
+<p>Explain your reasoning."</p>
+<p>```</p><p><strong>Pros:</strong></p>
+<p>- No ground truth needed</p>
+<p>- Works for any task (not just RAG)</p>
+<p>- Can evaluate complex, nuanced quality</p>
+<p>- Aligns with human judgment (85%+ agreement with human raters on GPT-4 judgments)</p><p><strong>Cons:</strong></p>
+<p>- Costs money (you're calling an LLM to evaluate another LLM)</p>
+<p>- Can inherit biases from the judge (GPT-4 has position bias, verbosity bias, self-enhancement bias)</p>
+<p>- Prompt wording matters <em>a lot</em>—small changes in phrasing can shift scores by 10-15%</p><p><strong>Pro tip:</strong> Use Chain-of-Thought prompting with your judge. Ask it to explain its reasoning step-by-step before assigning a score. This improves reliability by 10-15% and gives you a debuggable reasoning trail.</p><p><h2>Hallucination Detection: The Hard Problem</h2></p><p>Here's the truth: hallucinations are <em>hard</em> to detect automatically.</p><p>Your LLM generates a paragraph that sounds completely plausible. It cites no sources (because it made it up). It's grammatically perfect. How do you know it's wrong without checking every fact manually?</p><p>![Mermaid Diagram](https://raw.githubusercontent.com/thousandmiles-ai/blogs/main/blog-images/how-to-evaluate-llm-outputs-beyond-looks-good-to-me/mermaid-905f3af0b7c26ba371447ec17ca99415.svg)</p><p>Recent approaches:</p><p><strong>Self-Consistency Methods</strong> (SelfCheckGPT):</p>
+<p>- Generate the same answer multiple times with different random seeds</p>
+<p>- If the answer is consistent across generations, it's probably faithful</p>
+<p>- If it varies wildly each time, it's probably hallucinated</p>
+<p>- This works because factual claims are stable; hallucinations drift</p><p><strong>Token Probability Methods</strong>:</p>
+<p>- Look at the model's internal confidence scores during generation</p>
+<p>- If the model assigns low probability to its own words, something's off</p>
+<p>- This doesn't always work—some hallucinations are high-confidence</p><p><strong>Supervised Detection</strong>:</p>
+<p>- Train a detector on labeled hallucination data</p>
+<p>- Feed it hidden state representations from the LLM</p>
+<p>- Let it predict whether a claim is hallucinated</p>
+<p>- Works well in-domain; requires new training for new domains</p><p><strong>The Honest Answer</strong>: There's no silver bullet. You need multiple approaches:</p>
+<p>1. Faithfulness metric to catch unsupported claims</p>
+<p>2. Self-consistency checks for flagrant hallucinations</p>
+<p>3. Human spot-checking on high-stakes domains</p>
+<p>4. Reference-based metrics (comparing output to ground truth) when you have labels</p><p><h2>Common Evaluation Mistakes</h2></p><p><h3>Mistake 1: Relying on a Single Metric</h3></p><p>"Our faithfulness score is 0.92—we're good!"</p><p>No. Faithfulness only tells you about hallucinations. Your answer could be:</p>
+<p>- Faithful but irrelevant (addresses the wrong question)</p>
+<p>- Faithful and relevant but missing half the context</p><p>Evaluate all dimensions. If any dimension is weak, you have a problem.</p><p><h3>Mistake 2: Gaming the Metrics</h3></p><p>You optimize for high RAGAS scores, so you make your retrieved context smaller (fewer chunks = easier for the LLM to be faithful). Now your scores are great, but your answers miss important details.</p><p>Or you use a judge that's biased toward verbose, confident-sounding answers, so your system generates fluff.</p><p><strong>The trap</strong>: High metrics ≠ good product. You still need human evaluation on real user queries.</p><p><h3>Mistake 3: Forgetting About Domain Shift</h3></p><p>You evaluate your system on one domain (e.g., Python tutorials) and get great scores. You ship it to production for a different domain (e.g., medical advice). Suddenly users report hallucinations.</p><p>This happens because:</p>
+<p>- Your training data was skewed toward one domain</p>
+<p>- Your evaluation framework was calibrated on one domain</p>
+<p>- The LLM's behavior changes in new domains</p><p>Always evaluate on representative samples from <em>your actual use case</em>.</p><p><h3>Mistake 4: Ignoring the Prompt</h3></p><p>LLM judges are incredibly sensitive to how you phrase the evaluation prompt.</p><p>"Is this answer correct?" gets different results than "Is this answer helpful and accurate?"</p>
+<p>"Rate 1-10" gets different results than "Rate excellent/good/fair/poor"</p><p>Test different prompt wordings and see which ones align with your actual needs.</p><p><h2>Putting It Into Practice</h2></p><p>Here's a lightweight evaluation workflow for your RAG system:</p><p>1. <strong>Collect 50-100 real test queries</strong> from your users or domain experts</p>
+<p>2. <strong>Generate answers</strong> using your system</p>
+<p>3. <strong>Run RAGAS metrics</strong> on all of them</p>
+<p>   - Calculate mean faithfulness, relevancy, precision, recall</p>
+<p>   - Flag any queries with low scores</p>
+<p>4. <strong>Spot-check the flagged queries</strong> manually</p>
+<p>   - Read the answer and context</p>
+<p>   - Verify if the metric agrees with your judgment</p>
+<p>5. <strong>Iterate</strong> — improve your retriever, prompt, or model based on what you find</p><p>Tools to use:</p>
+<p>- <strong>RAGAS</strong> (open source, free, works with any LLM via API)</p>
+<p>- <strong>DeepEval</strong> (Python library, supports RAGAS + custom metrics)</p>
+<p>- <strong>Langfuse</strong> (LLM observability platform with built-in LLM-as-judge)</p>
+<p>- <strong>Confident AI</strong> (commercial, but focuses on evaluation workflows)</p><p><h2>The Real Win: Debugging</h2></p><p>Here's the secret nobody tells you: the real value of metrics isn't the score. It's the <em>debugging information</em>.</p><p>When your faithfulness score is 0.65, you know where to look: the answer contains unsupported claims. Start examining those claims.</p><p>When your context recall is 0.4, you know your retriever is missing stuff. Debug the retriever, not the LLM.</p><p>When answer relevancy is low but everything else is high, you know your prompt is asking the wrong question.</p><p>Metrics are a map. They point you toward the problem. But you still have to solve it.</p><p><h2>Next Steps</h2></p><p>1. Pick one metric that matters to your system (probably faithfulness for RAG)</p>
+<p>2. Set a threshold (e.g., "we want 0.8+ on all metrics")</p>
+<p>3. Evaluate your current system</p>
+<p>4. When scores are low, debug instead of tweaking prompts blindly</p>
+<p>5. Repeat</p><p>Start small. Don't build a 500-metric evaluation dashboard on day one. Evaluate the dimensions that matter most to your users, and add more metrics as you grow.</p><p>And yes, you still need humans. Metrics catch patterns and point you toward problems. But someone has to verify that the metrics are actually measuring what you care about.</p><p>Because in the end, "looks good to me" scales to maybe 100 queries before it breaks. Metrics scale to 100,000. And human judgment backed by metrics? That actually works in production.</p><p>---</p><p><em>Your turn: what does your LLM system get wrong most often? Is it hallucinations, missing context, or something else? Metrics can help you find out.</em></p>
+    </div>
+  </article>
+</body>
+</html>
